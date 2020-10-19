@@ -5,11 +5,35 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 -- Language definition ---------------------------------------------------------
 -- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
 --
--- Program    ::= transition*
--- transition ::= id "->" id ";"
+-- Program    ::= state* transition*
+-- state      ::= ("->")? id ("{" invar "}")?
+-- transition ::= id "->" id props?
+-- props      ::= ("guard {" guard "}")?
+--                ("sync {" action "}")?
+--                ("reset {" clocks "}")?
+--
+-- invar      ::= id ("<=" | "<") nat
+-- guard      ::= constraint ("&&" constraint)*
+-- constraint ::= id op nat | id "-" id op nat
+-- op         ::= "<=" | "<" | "==" | ">" | ">="
+-- action     ::= id /* To be extended for communication */
+-- clocks     ::= id ("," id)*
+--
 -- id         ::= (letter | "_") (letter | "_" | digit)*
 -- letter     ::= [a-zA-Z]
 -- digit      ::= [0-9]
+-- nat        ::= [1-9] digit*
+--
+-- Example:
+-- -> foo
+-- bar { x < 10 }
+--
+-- foo -> bar
+--     guard { x - y == 5 && x > 2}
+--     sync { a }
+--     reset { x }
+-- bar -> baz
+--     reset { y }
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
