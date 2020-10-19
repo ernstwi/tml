@@ -1,4 +1,5 @@
 include "parser-combinators.mc"
+include "json.mc"
 include "../miking-ipm/src/models/modelVisualizer.mc"
 
 -- Language definition ---------------------------------------------------------
@@ -20,16 +21,20 @@ lang TA
     | Program [Trans]
 
     sem eval =
-    | Trans (a, b) -> (a, b, '0')
     | Program ts ->
-        let states = distinct eqString (join (map (lam t.
-            match t with Trans (a, b) then
-                [a, b]
-            else error "Not a transition") ts)) in
+        let states = map (lam s. JsonString s)
+            (distinct eqString (join (map (lam t.
+                match t with Trans (a, b) then
+                    [a, b]
+                else error "Not a transition") ts))) in
         let transitions = map (lam t. eval t) ts in
-        let startState = "foo" in
-        let acceptStates = ["baz"] in
-        dfaConstr states transitions startState acceptStates eqString eqChar
+        JsonObject [
+            ("states", JsonArray states),
+            ("transitions", JsonArray transitions)]
+    | Trans (a, b) ->
+        JsonObject [
+            ("from", JsonString a),
+            ("to", JsonString b)]
 end
 
 -- Tokens ----------------------------------------------------------------------
@@ -75,14 +80,5 @@ let program: Parser Program =
 
 let parseResult = testParser program "foo -> bar; bar -> baz;" in
 let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
-let dfa = eval ast in
-
--- IPM invocation --------------------------------------------------------------
-
-let node2string = (lam x. x) in
-let label2string = (lam x. [x]) in
-
-visualize [
-	DFA(dfa,"00",node2string, label2string, "LR", [])
-    -- ^ Arguments: data, input, node2str, label2str, direction, vSettings
-]
+let json = eval ast in
+print (formatJson json)
