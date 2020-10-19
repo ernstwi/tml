@@ -1,6 +1,9 @@
 include "parser-combinators.mc"
 include "../miking-ipm/src/models/modelVisualizer.mc"
 
+-- BNF -------------------------------------------------------------------------
+-- Program    ::= <Transition>*
+-- Transition ::= ID "->" ID ";"
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
