@@ -61,7 +61,7 @@ lang TA
             ("to", JsonString b)]
 end
 
--- Tokens ----------------------------------------------------------------------
+-- Tokens (from stdlib) --------------------------------------------------------
 
 let ws: Parser () = void (many spaces1)
 
@@ -76,11 +76,34 @@ let symbol = string -- Alias
 let isValidChar: Char -> Bool = lam c.
   or (isAlphanum c) (eqChar c '_')
 
+-- Parse a specific string and fail if it is followed by
+-- additional valid identifier characters.
+let reserved: String -> Parser () = lam s.
+  void (token (apl (lexString s) (notFollowedBy (satisfy isValidChar ""))))
+
+let number: Parser Int = token lexNumber
+
+-- List of reserved keywords
+let keywords = ["guard", "sync", "reset"]
+
+-- Parse an identifier, but require that it is not in the list
+-- of reserved keywords.
 let identifier: Parser String =
+  let validId =
     bind (satisfy (lam c. or (isAlpha c) (eqChar '_' c)) "valid identifier") (lam c.
     -- ^ Identifiers must start with letter or underscore, not number
     bind (token (many (satisfy isValidChar ""))) (lam cs.
     pure (cons c cs)))
+  in
+  try (
+    bind validId (lam x.
+    if any (eqString x) keywords
+    then fail (concat (concat "keyword '" x) "'") "identifier"
+    else pure x)
+  )
+
+utest showError (testParser identifier "guard")
+with "Parse error at 1:1: Unexpected keyword 'guard'. Expected identifier"
 
 utest testParser identifier "foo" with
 Success ("foo", ("", {file="", row=1, col=4}))
