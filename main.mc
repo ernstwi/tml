@@ -1,14 +1,28 @@
 include "parser-combinators.mc"
 include "../miking-ipm/src/models/modelVisualizer.mc"
 
--- AST  ------------------------------------------------------------------------
+
+-- Language fragment: AST definition + code generation (semantics) -------------
 
 type Loc = String
 
-type Statmt
-con Trans : (Loc, Loc) -> Statmt
+lang TA
+    syn Expr =
+    | Trans (Loc, Loc)
+    | Program [Trans]
 
-type Program = [Statmt]
+    sem eval =
+    | Trans (a, b) -> (a, b, '0')
+    | Program ts ->
+        let states = distinct eqString (join (map (lam t.
+            match t with Trans (a, b) then
+                [a, b]
+            else error "Not a transition") ts)) in
+        let transitions = map (lam t. eval t) ts in
+        let startState = "foo" in
+        let acceptStates = ["baz"] in
+        dfaConstr states transitions startState acceptStates eqString eqChar
+end
 
 -- Tokens ----------------------------------------------------------------------
 
@@ -36,50 +50,29 @@ Success ("foo", ("", {file="", row=1, col=4}))
 
 -- Main parser -----------------------------------------------------------------
 
-let statmt: Parser Statmt =
+mexpr use TA in
+
+let trans: Parser Trans =
     bind identifier (lam x.
     bind (symbol "->") (lam _.
     bind identifier (lam y.
     bind (symbol ";") (lam _.
-    pure (Trans (x, y))))))
+    pure (Trans (x, y)))))) in
 
-utest testParser statmt "foo -> bar;" with
-Success (Trans ("foo", "bar"), ("", {file="", row=1, col=12}))
-
-let main: Parser Program =
-    many statmt
-
-utest testParser main "foo -> bar; bar -> baz;" with
-Success ([Trans ("foo", "bar"), Trans("bar", "baz")], ("", {file="", row=1, col=24}))
+let program: Parser Program =
+    bind (many trans) (lam ts.
+    pure (Program ts)) in
 
 -- Code generation -------------------------------------------------------------
 
-let parseResult = testParser main "foo -> bar; bar -> baz;"
-let ast = match parseResult with Success (x, _) then x else error "Parsing failed"
-
-let states = distinct eqString (join (map (lam t.
-    match t with Trans (a, b) then
-        [a, b]
-    else error "Not a transition") ast))
-
-utest states with ["foo", "bar", "baz"]
-
-let transitions = map (lam t.
-    match t with Trans (a, b) then
-        (a, b, '0')
-    else error "Not a transition") ast
-
-utest transitions with [("foo", "bar", '0'), ("bar", "baz", '0')]
+let parseResult = testParser program "foo -> bar; bar -> baz;" in
+let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
+let dfa = eval ast in
 
 -- IPM invocation --------------------------------------------------------------
 
-let startState = "foo"
-let acceptStates = ["baz"]
-let node2string = (lam x. x)
-let label2string = (lam x. [x])
-
-mexpr
-let dfa = dfaConstr states transitions startState acceptStates eqString eqChar in
+let node2string = (lam x. x) in
+let label2string = (lam x. [x]) in
 
 visualize [
 	DFA(dfa,"00",node2string, label2string, "LR", [])
