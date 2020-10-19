@@ -125,7 +125,7 @@ let program: Parser Program =
 
 -- Code generation -------------------------------------------------------------
 
-let parseResult = testParser program "foo -> bar; bar -> baz;" in
+let parseResult = testParser program (readFile "prototype/input") in
 let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
 let json = eval ast in
 print (formatJson json)
