@@ -1,9 +1,14 @@
 include "parser-combinators.mc"
 include "../miking-ipm/src/models/modelVisualizer.mc"
 
--- BNF -------------------------------------------------------------------------
--- Program    ::= <Transition>*
--- Transition ::= ID "->" ID ";"
+-- Language definition ---------------------------------------------------------
+-- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
+--
+-- Program    ::= transition*
+-- transition ::= id "->" id ";"
+-- id         ::= (letter | "_") (letter | "_" | digit)*
+-- letter     ::= [a-zA-Z]
+-- digit      ::= [0-9]
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
