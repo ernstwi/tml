@@ -13,8 +13,7 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 --                ("reset {" clocks "}")?
 --
 -- invar      ::= id ("<=" | "<") nat
--- guard      ::= constraint ("&&" constraint)*
--- constraint ::= id op nat | id "-" id op nat
+-- guard      ::= id op nat | id "-" id op nat
 -- op         ::= "<=" | "<" | "==" | ">" | ">="
 -- action     ::= id /* To be extended for communication */
 -- clocks     ::= id ("," id)*
@@ -29,7 +28,7 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 -- bar { x < 10 }
 --
 -- foo -> bar
---     guard { x - y == 5 && x > 2}
+--     guard { x - y == 5 }
 --     sync { a }
 --     reset { x }
 -- bar -> baz
@@ -37,28 +36,27 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
-type Loc = String
+type Cmp
+con Lt : () -> Cmp
+con LtEq : () -> Cmp
 
 lang TA
-    syn Expr =
-    | Trans (Loc, Loc)
-    | Program [Trans]
+    syn Expression =
+    | Invariant (String, Cmp, Int)
+    | State (String, Boolean, Option Invariant)
+    | Program [State]
 
     sem eval =
-    | Program ts ->
-        let states = map (lam s. JsonString s)
-            (distinct eqString (join (map (lam t.
-                match t with Trans (a, b) then
-                    [a, b]
-                else error "Not a transition") ts))) in
-        let transitions = map (lam t. eval t) ts in
+    | Invariant (x, cmp, n) ->
+        JsonString (concat x
+            (concat (match cmp with Lt () then "<" else "<=") (int2string n)))
+    | State (id, initial, invariant) ->
         JsonObject [
-            ("states", JsonArray states),
-            ("transitions", JsonArray transitions)]
-    | Trans (a, b) ->
-        JsonObject [
-            ("from", JsonString a),
-            ("to", JsonString b)]
+            ("id", JsonString id),
+            ("initial", JsonBool initial),
+            ("invariant", match invariant with Some inv then eval inv else JsonNull ())]
+    | Program states ->
+        JsonArray (map (lam s. eval s) states)
 end
 
 -- Tokens (from stdlib) --------------------------------------------------------
@@ -112,16 +110,33 @@ Success ("foo", ("", {file="", row=1, col=4}))
 
 mexpr use TA in
 
-let trans: Parser Trans =
-    bind identifier (lam x.
-    bind (symbol "->") (lam _.
-    bind identifier (lam y.
-    bind (symbol ";") (lam _.
-    pure (Trans (x, y)))))) in
+let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
+let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
+let cmp: Parser Cmp = alt (try ltEq) lt in
 
-let program: Parser Program =
-    bind (many trans) (lam ts.
-    pure (Program ts)) in
+utest testParser cmp "<" with
+Success (Lt (), ("", {file="", row=1, col=2})) in
+
+utest testParser cmp "<=" with
+Success (LtEq (), ("", {file="", row=1, col=3})) in
+
+let invariant: Parser Expr =
+    bind (symbol "{") (lam _.
+    bind identifier (lam id.
+    bind cmp (lam c.
+    bind number (lam n.
+    bind (symbol "}") (lam _.
+    pure (Invariant (id, c, n))))))) in
+
+let state: Parser Expr =
+    bind (optional (symbol "->")) (lam init.
+    bind identifier (lam id.
+    bind (optional invariant) (lam invar.
+    pure (State (id, match init with Some _ then true else false, invar))))) in
+
+let program: Parser Expr =
+    bind (many state) (lam ss.
+    pure (Program ss)) in
 
 -- Code generation -------------------------------------------------------------
 
