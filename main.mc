@@ -112,7 +112,7 @@ mexpr use TA in
 
 let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
-let cmp: Parser Cmp = alt (try ltEq) lt in
+let cmp: Parser Cmp = alt ltEq lt in
 
 let invariant: Parser Expression =
     bind (symbol "{") (lam _.
