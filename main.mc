@@ -114,12 +114,6 @@ let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
 let cmp: Parser Cmp = alt (try ltEq) lt in
 
-utest testParser cmp "<" with
-Success (Lt (), ("", {file="", row=1, col=2})) in
-
-utest testParser cmp "<=" with
-Success (LtEq (), ("", {file="", row=1, col=3})) in
-
 let invariant: Parser Expr =
     bind (symbol "{") (lam _.
     bind identifier (lam id.
@@ -143,4 +137,37 @@ let program: Parser Expr =
 let parseResult = testParser program (readFile "prototype/input") in
 let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
 let json = eval ast in
-print (formatJson json)
+let _ = print (formatJson json) in
+
+-- Tests -----------------------------------------------------------------------
+
+utest testParser cmp "<" with
+Success (Lt (), ("", {file="", row=1, col=2})) in
+
+utest testParser cmp "<=" with
+Success (LtEq (), ("", {file="", row=1, col=3})) in
+
+utest testParser invariant "{ x < 10 }" with
+Success(Invariant ("x", Lt (), 10), ("", {file="", row=1, col=11})) in
+
+utest eval (Invariant ("x", Lt (), 10)) with
+JsonString ("x<10") in
+
+utest testParser state "bar { x < 10 }" with
+Success(State ("bar", false, Some (Invariant ("x", Lt (), 10))), ("", {file="", row=1, col=15})) in
+
+utest eval (State ("bar", false, Some (Invariant ("x", Lt (), 10)))) with
+JsonObject [
+    ("id", JsonString "bar"),
+    ("initial", JsonBool false),
+    ("invariant", JsonString "x<10")] in
+
+utest testParser state "-> foo" with
+Success(State ("foo", true, None ()), ("", {file="", row=1, col=7})) in
+
+utest testParser program "-> foo bar { x < 10 }" with
+Success(Program [
+    State ("foo", true, None ()),
+    State ("bar", false, Some (Invariant ("x", Lt (), 10)))],
+    ("", {file="", row=1, col=22})) in
+()
