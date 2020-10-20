@@ -114,7 +114,7 @@ let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
 let cmp: Parser Cmp = alt (try ltEq) lt in
 
-let invariant: Parser Expr =
+let invariant: Parser Expression =
     bind (symbol "{") (lam _.
     bind identifier (lam id.
     bind cmp (lam c.
@@ -122,13 +122,13 @@ let invariant: Parser Expr =
     bind (symbol "}") (lam _.
     pure (Invariant (id, c, n))))))) in
 
-let state: Parser Expr =
+let state: Parser Expression =
     bind (optional (symbol "->")) (lam init.
     bind identifier (lam id.
     bind (optional invariant) (lam invar.
     pure (State (id, match init with Some _ then true else false, invar))))) in
 
-let program: Parser Expr =
+let program: Parser Expression =
     bind (many state) (lam ss.
     pure (Program ss)) in
 
