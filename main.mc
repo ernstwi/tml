@@ -36,11 +36,11 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
-type Cmp
-con Lt : () -> Cmp
-con LtEq : () -> Cmp
-
 lang TA
+    syn Cmp =
+    | Lt ()
+    | LtEq ()
+
     syn Expression =
     | Invariant (String, Cmp, Int)
     | State (String, Boolean, Option Invariant)
