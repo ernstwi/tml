@@ -252,7 +252,7 @@ let program: Parser Expression =
 
 -- Main ------------------------------------------------------------------------
 
-let testDir = "prototype/test" in
+let testDir = "test" in
 let tests = ["00", "01", "02", "03", "04", "05"] in
 
 let pj = pyimport "json" in
