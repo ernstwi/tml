@@ -1,7 +1,6 @@
 include "parser-combinators.mc"
 include "json.mc"
 include "either.mc"
-include "../miking-ipm/src/models/modelVisualizer.mc"
 
 -- Language definition ---------------------------------------------------------
 
