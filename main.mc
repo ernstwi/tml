@@ -40,7 +40,7 @@ include "../miking-ipm/src/models/modelVisualizer.mc"
 -- • Allow any order of properties (guard, sync, reset)
 --
 -- Semantic rules:
--- • Only one initial state
+-- • Exactly one initial state
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
@@ -71,6 +71,7 @@ lang TA
     | State (String, Boolean, Option Invariant)
     | Program ([State], [Transition])
 
+    -- Code generation
     sem eval =
     | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
     | Sync action -> JsonString action
@@ -100,6 +101,17 @@ lang TA
         JsonObject [
             ("states", JsonArray (map (lam s. eval s) states)),
             ("transitions", JsonArray (map (lam t. eval t) transitions))]
+
+    -- Semantic checks
+    sem check =
+    | Program (states, transitions) ->
+        let iss = filter (lam s.
+            match s with State (_, initial, _) then
+                initial
+            else error "Malformed State") states in
+        if neqi (length iss) 1 then
+            Some (concat "Semantic error: " (concat (int2string (length iss)) " initial states"))
+        else None ()
 end
 
 -- Tokenizers (from stdlib) ----------------------------------------------------
@@ -241,25 +253,36 @@ let program: Parser Expression =
 -- Main ------------------------------------------------------------------------
 
 let testDir = "prototype/test" in
-let tests = ["00", "01", "02", "03"] in
-let printJson = true in
+let tests = ["00", "01", "02", "03", "04"] in
 
 let pj = pyimport "json" in
 
 let _ = map (lam t.
+    -- Parsing
     let parseResult = testParser program (readFile (concat testDir (concat "/" (concat t ".in")))) in
     let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
+
+    -- Semantic checks
+    let semcheck = check ast in
+
+    -- Code generation
     let json = formatJson (eval ast) in
     
+    -- Json formatting
     let jsonPy = pycall pj "loads" (json,) in
     let jsonPyPretty = pycallkw pj "dumps" (jsonPy,) { indent=4, sort_keys="True" } in
     let jsonPretty = pyconvert jsonPyPretty in
 
+    -- Compare with expected output
     let refFile = concat testDir (concat "/" (concat t ".out")) in
     let refExists = fileExists refFile in
+    let compiled = concat (match semcheck with Some s then concat s "\n" else "") (concat jsonPretty "\n") in
 
-    let _ = printLn (concat "-- Test " (concat t (concat ": " (concat (if not refExists then "? --" else if eqString (concat jsonPretty "\n") (readFile refFile) then "pass " else "fail ") "---------------------------------------------------------------")))) in
-    let _ = if printJson then printLn jsonPretty else () in
+    let res = if not refExists then "? --" else if eqString compiled (readFile refFile) then "pass " else "fail " in
+
+    -- Print results
+    let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
+    let _ = print compiled in
     ()
 ) tests in
 
