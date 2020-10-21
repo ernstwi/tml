@@ -281,7 +281,7 @@ let _ = map (lam t.
 
         -- Code generation
         let json = formatJson (eval ast) in
-        
+
         -- Json formatting
         let jsonPy = pycall pj "loads" (json,) in
         let jsonPyPretty = pycallkw pj "dumps" (jsonPy,) { indent=4, sort_keys="True" } in
