@@ -1,0 +1,9 @@
+foo
+init bar { x <= 10 }
+
+foo -> bar
+    guard { x - y == 5 }
+    sync { press }
+bar -> baz
+    sync { press }
+baz -> baz

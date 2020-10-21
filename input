@@ -1,9 +1,0 @@
--> foo
-bar { x < 10 }
-
-foo -> bar
-    guard { x - y == 5 }
-    sync { a }
-    reset { x }
-bar -> baz
-    reset { y }

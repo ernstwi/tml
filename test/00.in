@@ -1,0 +1,5 @@
+init foo
+foo -> bar
+    guard { x - y == 5 }
+bar { x < 10 }
+bar -> baz

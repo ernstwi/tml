@@ -1,0 +1,6 @@
+init foo
+bar { x < 10 }
+
+foo -> bar
+    guard { x >= 5 }
+bar -> baz
