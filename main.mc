@@ -253,37 +253,43 @@ let program: Parser Expression =
 -- Main ------------------------------------------------------------------------
 
 let testDir = "prototype/test" in
-let tests = ["00", "01", "02", "03", "04"] in
+let tests = ["00", "01", "02", "03", "04", "05"] in
 
 let pj = pyimport "json" in
+
+let compareAndPrint = lam t. lam output.
+    let refFile = concat testDir (concat "/" (concat t ".out")) in
+    let refExists = fileExists refFile in
+    let res = if not refExists then "? --" else if eqString (concat output "\n" ) (readFile refFile) then "pass " else "fail " in
+    let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
+    let _ = printLn output in ()
+in
 
 let _ = map (lam t.
     -- Parsing
     let parseResult = testParser program (readFile (concat testDir (concat "/" (concat t ".in")))) in
-    let ast = match parseResult with Success (x, _) then x else error "Parsing failed" in
+    let syncheck = match parseResult with Failure _ then Some (showError parseResult) else None () in
 
-    -- Semantic checks
-    let semcheck = check ast in
+    match syncheck with Some s then
+        compareAndPrint t s
+    else
+        let ast = match parseResult with Success (x, _) then x
+            else error "This should already be caught by `syncheck` above" in
 
-    -- Code generation
-    let json = formatJson (eval ast) in
-    
-    -- Json formatting
-    let jsonPy = pycall pj "loads" (json,) in
-    let jsonPyPretty = pycallkw pj "dumps" (jsonPy,) { indent=4, sort_keys="True" } in
-    let jsonPretty = pyconvert jsonPyPretty in
+        -- Semantic checks
+        let semcheck = check ast in
 
-    -- Compare with expected output
-    let refFile = concat testDir (concat "/" (concat t ".out")) in
-    let refExists = fileExists refFile in
-    let compiled = concat (match semcheck with Some s then concat s "\n" else "") (concat jsonPretty "\n") in
+        -- Code generation
+        let json = formatJson (eval ast) in
+        
+        -- Json formatting
+        let jsonPy = pycall pj "loads" (json,) in
+        let jsonPyPretty = pycallkw pj "dumps" (jsonPy,) { indent=4, sort_keys="True" } in
+        let jsonPretty = pyconvert jsonPyPretty in
 
-    let res = if not refExists then "? --" else if eqString compiled (readFile refFile) then "pass " else "fail " in
-
-    -- Print results
-    let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
-    let _ = print compiled in
-    ()
+        -- Compare with expected output
+        let output = concat (match semcheck with Some s then concat s "\n" else "") jsonPretty in
+        compareAndPrint t output
 ) tests in
 
 -- Tests -----------------------------------------------------------------------
