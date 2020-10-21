@@ -6,4 +6,11 @@ test:
 brief:
 	mi main.mc | grep -e '--'
 
-.PHONY: test brief
+utest:
+	TMPFILE=$$(mktemp XXX) || exit 1; \
+	printf "include \"quiet.mc\"\n$$(cat main.mc)" > $$TMPFILE; \
+	mi test $$TMPFILE; \
+	rm $$TMPFILE
+
+.PHONY: test brief utest
+.SILENT: test brief utest
