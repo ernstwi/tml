@@ -7,15 +7,19 @@ include "either.mc"
 -- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
 --
 -- Program    ::= (state | transition)*
+--
 -- state      ::= "init"? id ("{" invar "}")?
+-- invar      ::= id ("<=" | "<") nat
+--
 -- transition ::= id "->" id props
--- props      ::= ("guard {" guard "}")?
+-- props      ::= ("guard {" guards "}")?
 --                ("sync {" action "}")?
 --                ("reset {" clocks "}")?
 --
--- invar      ::= id ("<=" | "<") nat
+-- guards     ::= guard ("&", guard)*
 -- guard      ::= (id op nat) | (id "-" id op nat)
 -- op         ::= "<=" | "<" | "==" | ">" | ">="
+--
 -- action     ::= id /* To be extended for communication */
 -- clocks     ::= id ("," id)*
 --
@@ -63,7 +67,8 @@ lang TA
     | Sync String
     | TwoClockGuard (String, String, Cmp, Int)
     | OneClockGuard (String, Cmp, Int)
-    | Guard (Either OneClockGuard TwoClockGuard)
+    | GuardConjunct (Either OneClockGuard TwoClockGuard)
+    | Guard [GuardConjunct]
     | Properties (Option Guard, Option Sync, Option Reset)
     | Transition (String, String, Properties)
     | Invariant (String, Cmp, Int)
@@ -74,13 +79,15 @@ lang TA
     sem eval =
     | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
     | Sync action -> JsonString action
-    | TwoClockGuard (x, y, cmp, n) -> JsonString (
-        concat (concat (concat x (concat "-" y)) (cmp2string cmp)) (int2string n))
-    | OneClockGuard (x, cmp, n) -> eval (Invariant (x, cmp, n))
-    | Guard either ->
+    | TwoClockGuard (x, y, cmp, n) ->
+        concat (concat (concat x (concat "-" y)) (cmp2string cmp)) (int2string n)
+    | OneClockGuard (x, cmp, n) ->
+        concat x (concat (cmp2string cmp) (int2string n))
+    | GuardConjunct either ->
         match either with Left oneClockGuard then eval oneClockGuard else
         match either with Right twoClockGuard then eval twoClockGuard else
         error "Malformed Either"
+    | Guard conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
     | Properties (og, os, or) -> [
         ("guard", match og with Some g then eval g else JsonNull ()),
         ("sync", match os with Some s then eval s else JsonNull ()),
@@ -202,18 +209,18 @@ let oneClockGuard: Parser Expression =
     bind number (lam n.
     pure (OneClockGuard (a, c, n))))) in
 
+let guardConjunct: Parser Expression =
+    bind (alt (try oneClockGuard) twoClockGuard) (lam expr.
+    match expr with OneClockGuard _ then pure (GuardConjunct (Left expr))
+    else pure (GuardConjunct (Right expr))) in
+
 let guard: Parser Expression =
     bind (string "guard") (lam _.
     bind (symbol "{") (lam _.
-    bind (alt (try oneClockGuard) twoClockGuard) (lam expr.
+    bind (sepBy (symbol "&") guardConjunct) (lam cs.
+    if eqi (length cs) 0 then fail "}" "clock constraint" else
     bind (symbol "}") (lam _.
-    pure (
-        match expr with OneClockGuard (a, cmp, n) then
-            Guard (Left (OneClockGuard (a, cmp, n)))
-        else match expr with TwoClockGuard (a, b, cmp, n) then
-            Guard (Right (TwoClockGuard (a, b, cmp, n)))
-        else
-            error "Parsing error: Guard"))))) in
+    pure (Guard cs))))) in
 
 let properties: Parser Expression =
     bind (optional guard) (lam og.

@@ -1,0 +1,4 @@
+init foo
+bar
+foo -> bar
+    guard { }
