@@ -16,7 +16,7 @@ include "either.mc"
 --                ("sync {" action "}")?
 --                ("reset {" clocks "}")?
 --
--- guards     ::= guard ("&", guard)*
+-- guards     ::= guard ("&" guard)*
 -- guard      ::= (id op nat) | (id "-" id op nat)
 -- op         ::= "<=" | "<" | "==" | ">" | ">="
 --
