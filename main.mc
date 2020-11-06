@@ -317,22 +317,25 @@ Success (TA_Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 2
 
 -- Main ------------------------------------------------------------------------
 
-let testDir = "test" in
-let tests = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09"] in
+if eqi (length argv) 1 then () else
 
-let pj = pyimport "json" in
+let quiet = if eqString (get argv 1) "--quiet" then true else false in
+let tests = (splitAt argv (if quiet then 2 else 1)).1 in
 
 let compareAndPrint = lam t. lam output.
-    let refFile = concat testDir (concat "/" (concat t ".out")) in
+    let refFile = concat (splitAt t (subi (length t) 3)).0 ".out" in
     let refExists = fileExists refFile in
     let res = if not refExists then "? --" else if eqString (concat output "\n" ) (readFile refFile) then "pass " else "fail " in
     let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
-    let _ = printLn output in ()
+    let _ = if quiet then () else printLn output in
+    ()
 in
+
+let pj = pyimport "json" in
 
 let _ = map (lam t.
     -- Parsing
-    let parseResult = testParser program (readFile (concat testDir (concat "/" (concat t ".in")))) in
+    let parseResult = testParser program (readFile t) in
     let syncheck = match parseResult with Failure _ then Some (showError parseResult) else None () in
 
     match syncheck with Some s then

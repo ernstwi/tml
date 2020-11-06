@@ -1,16 +1,13 @@
 all: test
 
 test:
-	mi main.mc
+	mi main.mc -- test/*.in
 
-brief:
-	mi main.mc | grep -e '--'
+quiet:
+	mi main.mc -- --quiet test/*.in
 
 utest:
-	TMPFILE=$$(mktemp XXX) || exit 1; \
-	printf "include \"quiet.mc\"\n$$(cat main.mc)" > $$TMPFILE; \
-	mi test $$TMPFILE; \
-	rm $$TMPFILE
+	mi test main.mc
 
-.PHONY: test brief utest
-.SILENT: test brief utest
+.PHONY: test quiet utest
+.SILENT: test quiet utest
