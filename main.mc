@@ -8,7 +8,9 @@ include "either.mc"
 --
 -- Program    ::= (state | transition)*
 --
--- state      ::= "init"? id ("{" invar "}")?
+-- state      ::= "init"? id ("{" invars "}")?
+--
+-- invars     ::= invar ("&" invar)*
 -- invar      ::= id ("<=" | "<") nat
 --
 -- transition ::= id "->" id props
@@ -71,7 +73,8 @@ lang TA
     | Guard [GuardConjunct]
     | Properties (Option Guard, Option Sync, Option Reset)
     | Transition (String, String, Properties)
-    | Invariant (String, Cmp, Int)
+    | InvariantConjunct (String, Cmp, Int)
+    | Invariant [InvariantConjunct]
     | State (String, Boolean, Option Invariant)
     | Program ([State], [Transition])
 
@@ -96,8 +99,9 @@ lang TA
         JsonObject (concat [
             ("from", JsonString a),
             ("to", JsonString b)] (eval props))
-    | Invariant (x, cmp, n) ->
-        JsonString (concat x (concat (cmp2string cmp) (int2string n)))
+    | InvariantConjunct (x, cmp, n) ->
+        concat x (concat (cmp2string cmp) (int2string n))
+    | Invariant conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
     | State (id, initial, invariant) ->
         JsonObject [
             ("id", JsonString id),
@@ -235,13 +239,18 @@ let transition: Parser Expression =
     bind properties (lam props.
     pure (Transition (a, b, props)))))) in
 
-let invariant: Parser Expression =
-    bind (symbol "{") (lam _.
+let invariantConjunct: Parser Expression =
     bind identifier (lam id.
     bind cmpInvar (lam c.
     bind number (lam n.
+    pure (InvariantConjunct (id, c, n))))) in
+
+let invariant: Parser Expression =
+    bind (symbol "{") (lam _.
+    bind (sepBy (symbol "&") guardConjunct) (lam cs.
+    if eqi (length cs) 0 then fail "}" "clock constraint" else
     bind (symbol "}") (lam _.
-    pure (Invariant (id, c, n))))))) in
+    pure (Invariant cs)))) in
 
 let state: Parser Expression =
     bind (optional (string "init")) (lam init.

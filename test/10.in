@@ -1,0 +1,2 @@
+init foo
+bar { x < 10 & y <= 25 }
