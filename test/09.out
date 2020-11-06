@@ -1,0 +1,34 @@
+{
+    "states": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "bar",
+            "initial": false,
+            "invariant": "x<10"
+        }
+    ],
+    "transitions": [
+        {
+            "from": "foo",
+            "guard": "x-y==5&z<7",
+            "reset": [
+                "x",
+                "y",
+                "z"
+            ],
+            "sync": null,
+            "to": "bar"
+        },
+        {
+            "from": "bar",
+            "guard": "x>=5",
+            "reset": null,
+            "sync": null,
+            "to": "baz"
+        }
+    ]
+}
