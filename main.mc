@@ -329,16 +329,18 @@ Success (TA_Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 2
 if eqi (length argv) 1 then () else
 
 let quiet = if eqString (get argv 1) "--quiet" then true else false in
-let tests = (splitAt argv (if quiet then 2 else 1)).1 in
+let write = if eqString (get argv 1) "--write" then true else false in
+let tests = (splitAt argv (if or quiet write then 2 else 1)).1 in
 
 let compareAndPrint = lam t. lam output.
     let refFile = concat (splitAt t (subi (length t) 3)).0 ".out" in
     let refExists = fileExists refFile in
 
     -- Write new reference output
-    let _ = if not refExists then writeFile refFile output else () in
+    let _ = if write then writeFile refFile output else () in
 
-    let res = if not refExists then "new -"
+    let res = if write then "new -"
+        else if not refExists then "? ---"
         else if eqString output (readFile refFile) then "pass "
         else "fail " in
 
