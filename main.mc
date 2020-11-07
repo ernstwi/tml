@@ -334,9 +334,16 @@ let tests = (splitAt argv (if quiet then 2 else 1)).1 in
 let compareAndPrint = lam t. lam output.
     let refFile = concat (splitAt t (subi (length t) 3)).0 ".out" in
     let refExists = fileExists refFile in
-    let res = if not refExists then "? --" else if eqString (concat output "\n" ) (readFile refFile) then "pass " else "fail " in
+
+    -- Write new reference output
+    let _ = if not refExists then writeFile refFile output else () in
+
+    let res = if not refExists then "new -"
+        else if eqString output (readFile refFile) then "pass "
+        else "fail " in
+
     let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
-    let _ = if quiet then () else printLn output in
+    let _ = if quiet then () else print output in
     ()
 in
 
@@ -348,7 +355,7 @@ let _ = map (lam t.
     let syncheck = match parseResult with Failure _ then Some (showError parseResult) else None () in
 
     match syncheck with Some s then
-        compareAndPrint t s
+        compareAndPrint t (concat s "\n")
     else
         let ast = match parseResult with Success (x, _) then x
             else error "This should already be caught by `syncheck` above" in
@@ -365,7 +372,7 @@ let _ = map (lam t.
         let jsonPretty = pyconvert jsonPyPretty in
 
         -- Compare with expected output
-        let output = concat (match semcheck with Some s then concat s "\n" else "") jsonPretty in
+        let output = concat (concat (match semcheck with Some s then concat s "\n" else "") jsonPretty) "\n" in
         compareAndPrint t output
 ) tests in
 
