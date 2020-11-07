@@ -247,7 +247,7 @@ let invariantConjunct: Parser Expression =
 
 let invariant: Parser Expression =
     bind (symbol "{") (lam _.
-    bind (sepBy (symbol "&") guardConjunct) (lam cs.
+    bind (sepBy (symbol "&") invariantConjunct) (lam cs.
     if eqi (length cs) 0 then fail "}" "clock constraint" else
     bind (symbol "}") (lam _.
     pure (Invariant cs)))) in
