@@ -2,6 +2,6 @@ init foo
 foo -> bar
     guard { x - y == 5 & z < 7}
     reset { x, y, z }
-bar { x < 10 }
+bar invar { x < 10 }
 bar -> baz
     guard { x >= 5}

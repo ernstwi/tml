@@ -8,7 +8,7 @@ include "either.mc"
 --
 -- Program    ::= (state | transition)*
 --
--- state      ::= "init"? id ("{" invars "}")?
+-- state      ::= "init"? id ("invar {" invars "}")?
 --
 -- invars     ::= invar ("&" invar)*
 -- invar      ::= id ("<=" | "<") nat
@@ -91,6 +91,8 @@ lang TA
         match either with Right twoClockGuard then eval twoClockGuard else
         error "Malformed Either"
     | Guard conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
+    -- TODO: Perhaps conjuncts would be better represented as elements in a JSON
+    --       array. Will see later when doing code generation from JSON.
     | Properties (og, os, or) -> [
         ("guard", match og with Some g then eval g else JsonNull ()),
         ("sync", match os with Some s then eval s else JsonNull ()),
@@ -147,7 +149,7 @@ let reserved: String -> Parser () = lam s.
 let number: Parser Int = token lexNumber
 
 -- List of reserved keywords
-let keywords = ["init", "guard", "sync", "reset"]
+let keywords = ["init", "invar", "guard", "sync", "reset"]
 
 -- Parse an identifier, but require that it is not in the list
 -- of reserved keywords.
@@ -246,11 +248,12 @@ let invariantConjunct: Parser Expression =
     pure (InvariantConjunct (id, c, n))))) in
 
 let invariant: Parser Expression =
+    bind (string "invar") (lam _.
     bind (symbol "{") (lam _.
     bind (sepBy (symbol "&") invariantConjunct) (lam cs.
     if eqi (length cs) 0 then fail "}" "clock constraint" else
     bind (symbol "}") (lam _.
-    pure (Invariant cs)))) in
+    pure (Invariant cs))))) in
 
 let state: Parser Expression =
     bind (optional (string "init")) (lam init.
@@ -291,14 +294,14 @@ Success (GtEq (), ("", {file="", row=1, col=3})) in
 utest testParser cmp ">" with
 Success (Gt (), ("", {file="", row=1, col=2})) in
 
-utest testParser invariant "{ x < 10 }" with
-Success (Invariant ([InvariantConjunct ("x", Lt (), 10)]),("", {file = "", row=1, col=11})) in
+utest testParser invariant "invar { x < 10 }" with
+Success (Invariant ([InvariantConjunct ("x", Lt (), 10)]),("", {file = "", row=1, col=17})) in
 
 utest eval (Invariant [InvariantConjunct ("x", Lt (), 10)]) with
 JsonString ("x<10") in
 
-utest testParser state "bar { x < 10 }" with
-Success (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)])), ("", {file="", row=1, col=15})) in
+utest testParser state "bar invar { x < 10 }" with
+Success (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)])), ("", {file="", row=1, col=21})) in
 
 utest eval (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)]))) with
 JsonObject [

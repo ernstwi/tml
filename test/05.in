@@ -1,5 +1,5 @@
 init foo
-init bar { x <= 10 }
+init bar invar { x <= 10 }
 
 foo -> bar
     guard { x - 2 == 5 }
