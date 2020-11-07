@@ -292,15 +292,15 @@ utest testParser cmp ">" with
 Success (Gt (), ("", {file="", row=1, col=2})) in
 
 utest testParser invariant "{ x < 10 }" with
-Success (Invariant ("x", Lt (), 10), ("", {file="", row=1, col=11})) in
+Success (Invariant ([InvariantConjunct ("x", Lt (), 10)]),("", {file = "", row=1, col=11})) in
 
-utest eval (Invariant ("x", Lt (), 10)) with
+utest eval (Invariant [InvariantConjunct ("x", Lt (), 10)]) with
 JsonString ("x<10") in
 
 utest testParser state "bar { x < 10 }" with
-Success (State ("bar", false, Some (Invariant ("x", Lt (), 10))), ("", {file="", row=1, col=15})) in
+Success (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)])), ("", {file="", row=1, col=15})) in
 
-utest eval (State ("bar", false, Some (Invariant ("x", Lt (), 10)))) with
+utest eval (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)]))) with
 JsonObject [
     ("id", JsonString "bar"),
     ("initial", JsonBool false),
