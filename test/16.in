@@ -1,0 +1,6 @@
+init foo
+bar
+foo -> bar
+    guard { x < 5 }
+    reset { x }
+    sync { a }

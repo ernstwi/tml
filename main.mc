@@ -13,10 +13,10 @@ include "either.mc"
 -- invars     ::= invar ("&" invar)*
 -- invar      ::= id ("<=" | "<") nat
 --
--- transition ::= id "->" id props
--- props      ::= ("guard {" guards "}")?
---                ("sync {" action "}")?
---                ("reset {" clocks "}")?
+-- transition ::= id "->" id prop*
+-- prop       ::= "guard {" guards "}"
+--              | "sync {" action "}"
+--              | "reset {" clocks "}"
 --
 -- guards     ::= guard ("&" guard)*
 -- guard      ::= (id op nat) | (id "-" id op nat)
@@ -32,6 +32,7 @@ include "either.mc"
 --
 -- Semantic rules:
 -- • Exactly one initial state
+-- • At most one of each property per transition (guard, sync, reset)
 
 -- Language fragment: AST definition + code generation (semantics) -------------
 
@@ -58,6 +59,11 @@ lang TA
     | GuardConjunct (Either OneClockGuard TwoClockGuard)
     | Guard [GuardConjunct]
     | Properties (Option Guard, Option Sync, Option Reset)
+    | Properties [Expression]
+    -- ^TODO: Can we have a more descriptive type here?
+    --        What I mean: [Guard | Sync | Reset]
+    --
+    -- ^(question): Overloaded constructor name `Properties` - is this allowed?
     | Transition (String, String, Properties)
     | InvariantConjunct (String, Cmp, Int)
     | Invariant [InvariantConjunct]
@@ -101,15 +107,67 @@ lang TA
             ("transitions", JsonArray (map (lam t. eval t) transitions))]
 
     -- Semantic checks
-    sem check =
-    | Program (states, transitions) ->
+
+    -- (question): Is there a way to type annotate interpreters?
+    -- Expression -> [String]
+    sem transitionProperties =
+    | Properties properties -> foldl (lam n. lam p.
+        match p with Guard _ then {n with guards = addi n.guards 1} else
+        match p with Sync _ then {n with syncs = addi n.syncs 1} else
+        match p with Reset _ then {n with resets = addi n.resets 1} else
+        error "Malformed Properties")
+        { guards = 0, syncs = 0, resets = 0 } properties
+
+    | Transition (a, b, properties) ->
+        let n = transitionProperties properties in
+
+        let semErrString = lam a. lam b. lam n. lam s.
+            concat "Semantic error: " (concat a (concat " -> " (concat b
+            (concat ": " (concat (int2string n) (concat " " s)))))) in
+
+        let semErrCheck = lam a. lam b. lam n. lam s.
+            if gti n 1 then [semErrString a b n s] else [] in
+
+        concat (semErrCheck a b n.guards "guards")
+            (concat (semErrCheck a b n.syncs "syncs")
+            (semErrCheck a b n.resets "resets"))
+    | Program (_, transitions) ->
+        join (map (lam t. transitionProperties t) transitions)
+
+    -- Expression -> [String]
+    sem initialState =
+    | Program (states, _) ->
         let iss = filter (lam s.
             match s with State (_, initial, _) then
                 initial
             else error "Malformed State") states in
         if neqi (length iss) 1 then
-            Some (concat "Semantic error: " (concat (int2string (length iss)) " initial states"))
-        else None ()
+            [concat "Semantic error: " (concat (int2string (length iss)) " initial states")]
+        else []
+
+    -- Expression -> [String]
+    sem check =
+    | Program p ->
+        concat (initialState (Program p)) (transitionProperties (Program p))
+        -- ^(question): Is there a way to get what we're matching on: Program p
+
+    -- Properties [ Guard | Sync | Reset ] ->
+    -- Properties (Optional Guard, Optional Sync, Optional Reset)
+    --
+    -- We know from semcheck that the array contains max 1 of each kind.
+    sem transform =
+    | Properties properties ->
+        let o = foldl (lam o. lam p.
+            match p with Guard _ then {o with g = Some p} else
+            match p with Sync _ then {o with s = Some p} else
+            match p with Reset _ then {o with r = Some p} else
+            error "Malformed Properties")
+            {g = None (), s = None (), r = None ()} properties in
+        Properties (o.g, o.s, o.r)
+    | Transition (a, b, properties) ->
+        Transition (a, b, transform properties)
+    | Program (states, transitions) ->
+        Program (states, map transform transitions)
 end
 
 -- Tokenizers (from stdlib) ----------------------------------------------------
@@ -215,10 +273,8 @@ let guard: Parser Expression =
     pure (Guard cs))))) in
 
 let properties: Parser Expression =
-    bind (optional guard) (lam og.
-    bind (optional sync) (lam os.
-    bind (optional reset) (lam or.
-    pure (Properties (og, os, or))))) in
+    bind (many (alt guard (alt sync reset))) (lam ps.
+    pure (Properties ps)) in
 
 let transition: Parser Expression =
     bind identifier (lam a.
@@ -322,19 +378,20 @@ let write = if eqString (get argv 1) "--write" then true else false in
 let tests = (splitAt argv (if or quiet write then 2 else 1)).1 in
 
 let compareAndPrint = lam t. lam output.
+    let outputNL = concat output "\n" in
     let refFile = concat (splitAt t (subi (length t) 3)).0 ".out" in
     let refExists = fileExists refFile in
 
     -- Write new reference output
-    let _ = if write then writeFile refFile output else () in
+    let _ = if write then writeFile refFile outputNL else () in
 
     let res = if write then "new -"
         else if not refExists then "? ---"
-        else if eqString output (readFile refFile) then "pass "
+        else if eqString outputNL (readFile refFile) then "pass "
         else "fail " in
 
     let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res "---------------------------------------------------------------")))) in
-    let _ = if quiet then () else print output in
+    let _ = if quiet then () else print outputNL in
     ()
 in
 
@@ -346,16 +403,22 @@ let _ = map (lam t.
     let syncheck = match parseResult with Failure _ then Some (showError parseResult) else None () in
 
     match syncheck with Some s then
-        compareAndPrint t (concat s "\n")
+        compareAndPrint t s
     else
         let ast = match parseResult with Success (x, _) then x
             else error "This should already be caught by `syncheck` above" in
 
         -- Semantic checks
         let semcheck = check ast in
+        if gti (length semcheck) 0 then
+            compareAndPrint t (strJoin "\n" semcheck)
+        else
+
+        -- AST transformation
+        let astt = transform ast in
 
         -- Code generation
-        let json = formatJson (eval ast) in
+        let json = formatJson (eval astt) in
 
         -- Json formatting
         let jsonPy = pycall pj "loads" (json,) in
@@ -363,8 +426,7 @@ let _ = map (lam t.
         let jsonPretty = pyconvert jsonPyPretty in
 
         -- Compare with expected output
-        let output = concat (concat (match semcheck with Some s then concat s "\n" else "") jsonPretty) "\n" in
-        compareAndPrint t output
+        compareAndPrint t jsonPretty
 ) tests in
 
 ()
