@@ -60,8 +60,8 @@ lang TA
     | Guard [GuardConjunct]
     | Properties (Option Guard, Option Sync, Option Reset)
     | Properties [Expression]
-    -- ^TODO: Can we have a more descriptive type here?
-    --        What I mean: [Guard | Sync | Reset]
+    -- ^(todo): Can we have a more descriptive type here?
+    --          What I mean: [Guard | Sync | Reset]
     --
     -- ^(question): Overloaded constructor name `Properties` - is this allowed?
     | Transition (String, String, Properties)
@@ -83,8 +83,8 @@ lang TA
         match either with Right twoClockGuard then eval twoClockGuard else
         error "Malformed Either"
     | Guard conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
-    -- TODO: Perhaps conjuncts would be better represented as elements in a JSON
-    --       array. Will see later when doing code generation from JSON.
+    -- (todo): Perhaps conjuncts would be better represented as elements in a JSON
+    --         array. Will see later when doing code generation from JSON.
     | Properties (og, os, or) -> [
         ("guard", match og with Some g then eval g else JsonNull ()),
         ("sync", match os with Some s then eval s else JsonNull ()),
@@ -323,9 +323,6 @@ Success (Lt (), ("", {file="", row=1, col=2})) in
 
 utest testParser cmp "<=" with
 Success (LtEq (), ("", {file="", row=1, col=3})) in
-
--- TODO: How is e.g. `<=>` handled? Should be parse error?
--- It is now LtEq, with rest ">".
 
 utest testParser cmp "==" with
 Success (Eq (), ("", {file="", row=1, col=3})) in
