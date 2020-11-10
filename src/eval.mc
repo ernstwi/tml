@@ -4,6 +4,13 @@ include "json.mc"
 include "ast.mc"
 
 lang TmlEval = TmlAst
+    sem cmp2string =
+    | Lt () -> "<"
+    | LtEq () -> "<="
+    | Eq () -> "=="
+    | GtEq () -> ">="
+    | Gt () -> ">"
+
     sem eval =
     | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
     | Sync action -> JsonString action

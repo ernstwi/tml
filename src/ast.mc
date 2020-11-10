@@ -6,13 +6,6 @@ lang TmlAst
     | GtEq ()
     | Gt ()
 
-    sem cmp2string =
-    | Lt () -> "<"
-    | LtEq () -> "<="
-    | Eq () -> "=="
-    | GtEq () -> ">="
-    | Gt () -> ">"
-
     syn Expression =
     | Reset [String]
     | Sync String
