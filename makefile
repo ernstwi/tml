@@ -1,13 +1,13 @@
 all: test
 
 test:
-	mi main.mc -- test/*.in
+	mi src/main.mc -- test/*.in
 
 quiet:
-	mi main.mc -- --quiet test/*.in
+	mi src/main.mc -- --quiet test/*.in
 
 utest:
-	mi test *.mc
+	mi test src/*.mc
 
 .PHONY: test quiet utest
 .SILENT: test quiet utest
