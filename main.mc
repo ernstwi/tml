@@ -1,6 +1,5 @@
-include "parser-combinators.mc"
-include "json.mc"
-include "either.mc"
+include "tml.mc"
+include "token.mc"
 
 -- Language definition ---------------------------------------------------------
 
@@ -34,192 +33,9 @@ include "either.mc"
 -- • Exactly one initial state
 -- • At most one of each property per transition (guard, sync, reset)
 
--- Language fragment: AST definition + code generation (semantics) -------------
-
-lang TA
-    syn Cmp =
-    | Lt ()
-    | LtEq ()
-    | Eq ()
-    | GtEq ()
-    | Gt ()
-
-    sem cmp2string =
-    | Lt () -> "<"
-    | LtEq () -> "<="
-    | Eq () -> "=="
-    | GtEq () -> ">="
-    | Gt () -> ">"
-
-    syn Expression =
-    | Reset [String]
-    | Sync String
-    | TwoClockGuard (String, String, Cmp, Int)
-    | OneClockGuard (String, Cmp, Int)
-    | GuardConjunct (Either OneClockGuard TwoClockGuard)
-    | Guard [GuardConjunct]
-    | Properties (Option Guard, Option Sync, Option Reset)
-    | Properties [Expression]
-    -- ^(todo): Can we have a more descriptive type here?
-    --          What I mean: [Guard | Sync | Reset]
-    --
-    -- ^(question): Overloaded constructor name `Properties` - is this allowed?
-    | Transition (String, String, Properties)
-    | InvariantConjunct (String, Cmp, Int)
-    | Invariant [InvariantConjunct]
-    | State (String, Boolean, Option Invariant)
-    | Program ([State], [Transition])
-
-    -- Code generation
-    sem eval =
-    | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
-    | Sync action -> JsonString action
-    | TwoClockGuard (x, y, cmp, n) ->
-        concat (concat (concat x (concat "-" y)) (cmp2string cmp)) (int2string n)
-    | OneClockGuard (x, cmp, n) ->
-        concat x (concat (cmp2string cmp) (int2string n))
-    | GuardConjunct either ->
-        match either with Left oneClockGuard then eval oneClockGuard else
-        match either with Right twoClockGuard then eval twoClockGuard else
-        error "Malformed Either"
-    | Guard conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
-    -- (todo): Perhaps conjuncts would be better represented as elements in a JSON
-    --         array. Will see later when doing code generation from JSON.
-    | Properties (og, os, or) -> [
-        ("guard", match og with Some g then eval g else JsonNull ()),
-        ("sync", match os with Some s then eval s else JsonNull ()),
-        ("reset", match or with Some r then eval r else JsonNull ())]
-    | Transition (a, b, props) ->
-        JsonObject (concat [
-            ("from", JsonString a),
-            ("to", JsonString b)] (eval props))
-    | InvariantConjunct (x, cmp, n) ->
-        concat x (concat (cmp2string cmp) (int2string n))
-    | Invariant conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
-    | State (id, initial, invariant) ->
-        JsonObject [
-            ("id", JsonString id),
-            ("initial", JsonBool initial),
-            ("invariant", match invariant with Some inv then eval inv else JsonNull ())]
-    | Program (states, transitions) ->
-        JsonObject [
-            ("states", JsonArray (map (lam s. eval s) states)),
-            ("transitions", JsonArray (map (lam t. eval t) transitions))]
-
-    -- Semantic checks
-
-    -- (question): Is there a way to type annotate interpreters?
-    -- Expression -> [String]
-    sem transitionProperties =
-    | Properties properties -> foldl (lam n. lam p.
-        match p with Guard _ then {n with guards = addi n.guards 1} else
-        match p with Sync _ then {n with syncs = addi n.syncs 1} else
-        match p with Reset _ then {n with resets = addi n.resets 1} else
-        error "Malformed Properties")
-        { guards = 0, syncs = 0, resets = 0 } properties
-
-    | Transition (a, b, properties) ->
-        let n = transitionProperties properties in
-
-        let semErrString = lam a. lam b. lam n. lam s.
-            concat "Semantic error: " (concat a (concat " -> " (concat b
-            (concat ": " (concat (int2string n) (concat " " s)))))) in
-
-        let semErrCheck = lam a. lam b. lam n. lam s.
-            if gti n 1 then [semErrString a b n s] else [] in
-
-        concat (semErrCheck a b n.guards "guards")
-            (concat (semErrCheck a b n.syncs "syncs")
-            (semErrCheck a b n.resets "resets"))
-    | Program (_, transitions) ->
-        join (map (lam t. transitionProperties t) transitions)
-
-    -- Expression -> [String]
-    sem initialState =
-    | Program (states, _) ->
-        let iss = filter (lam s.
-            match s with State (_, initial, _) then
-                initial
-            else error "Malformed State") states in
-        if neqi (length iss) 1 then
-            [concat "Semantic error: " (concat (int2string (length iss)) " initial states")]
-        else []
-
-    -- Expression -> [String]
-    sem check =
-    | Program p ->
-        concat (initialState (Program p)) (transitionProperties (Program p))
-        -- ^(question): Is there a way to get what we're matching on: Program p
-
-    -- Properties [ Guard | Sync | Reset ] ->
-    -- Properties (Optional Guard, Optional Sync, Optional Reset)
-    --
-    -- We know from semcheck that the array contains max 1 of each kind.
-    sem transform =
-    | Properties properties ->
-        let o = foldl (lam o. lam p.
-            match p with Guard _ then {o with g = Some p} else
-            match p with Sync _ then {o with s = Some p} else
-            match p with Reset _ then {o with r = Some p} else
-            error "Malformed Properties")
-            {g = None (), s = None (), r = None ()} properties in
-        Properties (o.g, o.s, o.r)
-    | Transition (a, b, properties) ->
-        Transition (a, b, transform properties)
-    | Program (states, transitions) ->
-        Program (states, map transform transitions)
-end
-
--- Tokenizers (from stdlib) ----------------------------------------------------
-
-let ws: Parser () = void (many spaces1)
-
--- `token p` parses `p` and any trailing whitespace or comments
-let token: Parser a -> Parser a = lexToken ws
-
--- `string s` parses the string `s` as a token
-let string: String -> Parser String = lam s. token (lexString s)
-let symbol = string -- Alias
-
--- Check if a character is valid in an identifier
-let isValidChar: Char -> Bool = lam c.
-  or (isAlphanum c) (eqChar c '_')
-
--- Parse a specific string and fail if it is followed by
--- additional valid identifier characters.
-let reserved: String -> Parser () = lam s.
-  void (token (apl (lexString s) (notFollowedBy (satisfy isValidChar ""))))
-
-let number: Parser Int = token lexNumber
-
--- List of reserved keywords
-let keywords = ["init", "invar", "guard", "sync", "reset"]
-
--- Parse an identifier, but require that it is not in the list
--- of reserved keywords.
-let identifier: Parser String =
-  let validId =
-    bind (satisfy (lam c. or (isAlpha c) (eqChar '_' c)) "valid identifier") (lam c.
-    -- ^ Identifiers must start with letter or underscore, not number
-    bind (token (many (satisfy isValidChar ""))) (lam cs.
-    pure (cons c cs)))
-  in
-  try (
-    bind validId (lam x.
-    if any (eqString x) keywords
-    then fail (concat (concat "keyword '" x) "'") "identifier"
-    else pure x)
-  )
-
-utest showError (testParser identifier "guard")
-with "Parse error at 1:1: Unexpected keyword 'guard'. Expected identifier"
-
-utest testParser identifier "foo" with
-Success ("foo", ("", {file="", row=1, col=4}))
-
 -- Parsers ---------------------------------------------------------------------
 
-mexpr use TA in
+mexpr use TML in
 
 let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
@@ -310,7 +126,7 @@ let program: Parser Expression =
     let ts = filter (lam x. match x with Transition _ then true else false) ls in
     pure (Program (ss, ts))) in
 
--- Tests -----------------------------------------------------------------------
+-- Unit tests ------------------------------------------------------------------
 
 utest testParser cmpInvar "<" with
 Success (Lt (), ("", {file="", row=1, col=2})) in
@@ -355,16 +171,16 @@ utest testParser reset "reset { }" with
 Failure (("'}'"),("valid identifier"),(("}"),{file = ([]),row = 1,col = 9})) in
 
 utest testParser reset "reset { foo }" with
-Success (TA_Reset ([("foo")]),(([]),{file = ([]),row = 1,col = 14})) in
+Success (TmlAst_Reset ([("foo")]),(([]),{file = ([]),row = 1,col = 14})) in
 
 utest testParser reset "reset { foo bar }" with
 Failure (("'b'"),("'}'"),(("bar }"),{file = ([]),row = 1,col = 13})) in
 
 utest testParser reset "reset { foo, bar }" with
-Success (TA_Reset ([("foo"),("bar")]),(([]),{file = ([]),row = 1,col = 19})) in
+Success (TmlAst_Reset ([("foo"),("bar")]),(([]),{file = ([]),row = 1,col = 19})) in
 
 utest testParser reset "reset { foo, bar, baz }" with
-Success (TA_Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 24})) in
+Success (TmlAst_Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 24})) in
 
 -- Main ------------------------------------------------------------------------
 
