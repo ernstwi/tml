@@ -1,17 +1,5 @@
 {
-    "states": [
-        {
-            "id": "foo",
-            "initial": true,
-            "invariant": null
-        },
-        {
-            "id": "bar",
-            "initial": false,
-            "invariant": "x<10"
-        }
-    ],
-    "transitions": [
+    "edges": [
         {
             "from": "foo",
             "guard": "x>=5",
@@ -25,6 +13,18 @@
             "reset": null,
             "sync": null,
             "to": "baz"
+        }
+    ],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "bar",
+            "initial": false,
+            "invariant": "x<10"
         }
     ]
 }

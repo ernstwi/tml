@@ -26,9 +26,9 @@ lang TmlAst
     --          What I mean: [Guard | Sync | Reset]
     --
     -- ^(question): Overloaded constructor name `Properties` - is this allowed?
-    | Transition (String, String, Properties)
+    | Edge (String, String, Properties)
     | InvariantConjunct (String, Cmp, Int)
     | Invariant [InvariantConjunct]
-    | State (String, Boolean, Option Invariant)
-    | Program ([State], [Transition])
+    | Location (String, Boolean, Option Invariant)
+    | Program ([Location], [Edge])
 end

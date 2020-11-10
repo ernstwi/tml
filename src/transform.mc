@@ -15,8 +15,8 @@ lang TmlTransform = TmlAst
             error "Malformed Properties")
             {g = None (), s = None (), r = None ()} properties in
         Properties (o.g, o.s, o.r)
-    | Transition (a, b, properties) ->
-        Transition (a, b, transform properties)
-    | Program (states, transitions) ->
-        Program (states, map transform transitions)
+    | Edge (a, b, properties) ->
+        Edge (a, b, transform properties)
+    | Program (locations, edges) ->
+        Program (locations, map transform edges)
 end

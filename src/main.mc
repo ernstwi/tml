@@ -5,14 +5,14 @@ include "token.mc"
 
 -- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
 --
--- Program    ::= (state | transition)*
+-- Program    ::= (location | edge)*
 --
--- state      ::= "init"? id ("invar {" invars "}")?
+-- location   ::= "init"? id ("invar {" invars "}")?
 --
 -- invars     ::= invar ("&" invar)*
 -- invar      ::= id ("<=" | "<") nat
 --
--- transition ::= id "->" id prop*
+-- edge       ::= id "->" id prop*
 -- prop       ::= "guard {" guards "}"
 --              | "sync {" action "}"
 --              | "reset {" clocks "}"
@@ -30,8 +30,8 @@ include "token.mc"
 -- nat        ::= [1-9] digit*
 --
 -- Semantic rules:
--- • Exactly one initial state
--- • At most one of each property per transition (guard, sync, reset)
+-- • Exactly one initial location
+-- • At most one of each property per edge (guard, sync, reset)
 
 -- Parsers ---------------------------------------------------------------------
 
@@ -92,12 +92,12 @@ let properties: Parser Expression =
     bind (many (alt guard (alt sync reset))) (lam ps.
     pure (Properties ps)) in
 
-let transition: Parser Expression =
+let edge: Parser Expression =
     bind identifier (lam a.
     bind (symbol "->") (lam _.
     bind identifier (lam b.
     bind properties (lam props.
-    pure (Transition (a, b, props)))))) in
+    pure (Edge (a, b, props)))))) in
 
 let invariantConjunct: Parser Expression =
     bind identifier (lam id.
@@ -113,18 +113,18 @@ let invariant: Parser Expression =
     bind (symbol "}") (lam _.
     pure (Invariant cs))))) in
 
-let state: Parser Expression =
+let location: Parser Expression =
     bind (optional (string "init")) (lam init.
     bind identifier (lam id.
     bind (notFollowedBy (symbol "->")) (lam _.
     bind (optional invariant) (lam invar.
-    pure (State (id, match init with Some _ then true else false, invar)))))) in
+    pure (Location (id, match init with Some _ then true else false, invar)))))) in
 
 let program: Parser Expression =
-    bind (many (alt (try state) transition)) (lam ls.
-    let ss = filter (lam x. match x with State _ then true else false) ls in
-    let ts = filter (lam x. match x with Transition _ then true else false) ls in
-    pure (Program (ss, ts))) in
+    bind (many (alt (try location) edge)) (lam le.
+    let ls = filter (lam x. match x with Location _ then true else false) le in
+    let es = filter (lam x. match x with Edge _ then true else false) le in
+    pure (Program (ls, es))) in
 
 -- Unit tests ------------------------------------------------------------------
 
@@ -155,17 +155,17 @@ Success (Invariant ([InvariantConjunct ("x", Lt (), 10)]),("", {file = "", row=1
 utest eval (Invariant [InvariantConjunct ("x", Lt (), 10)]) with
 JsonString ("x<10") in
 
-utest testParser state "bar invar { x < 10 }" with
-Success (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)])), ("", {file="", row=1, col=21})) in
+utest testParser location "bar invar { x < 10 }" with
+Success (Location ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)])), ("", {file="", row=1, col=21})) in
 
-utest eval (State ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)]))) with
+utest eval (Location ("bar", false, Some (Invariant [InvariantConjunct ("x", Lt (), 10)]))) with
 JsonObject [
     ("id", JsonString "bar"),
     ("initial", JsonBool false),
     ("invariant", JsonString "x<10")] in
 
-utest testParser state "init foo" with
-Success (State ("foo", true, None ()), ("", {file="", row=1, col=9})) in
+utest testParser location "init foo" with
+Success (Location ("foo", true, None ()), ("", {file="", row=1, col=9})) in
 
 utest testParser reset "reset { }" with
 Failure (("'}'"),("valid identifier"),(("}"),{file = ([]),row = 1,col = 9})) in

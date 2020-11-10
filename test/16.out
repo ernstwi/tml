@@ -1,5 +1,16 @@
 {
-    "states": [
+    "edges": [
+        {
+            "from": "foo",
+            "guard": "x<5",
+            "reset": [
+                "x"
+            ],
+            "sync": "a",
+            "to": "bar"
+        }
+    ],
+    "locations": [
         {
             "id": "foo",
             "initial": true,
@@ -9,17 +20,6 @@
             "id": "bar",
             "initial": false,
             "invariant": null
-        }
-    ],
-    "transitions": [
-        {
-            "from": "foo",
-            "guard": "x<5",
-            "reset": [
-                "x"
-            ],
-            "sync": "a",
-            "to": "bar"
         }
     ]
 }

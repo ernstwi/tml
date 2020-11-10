@@ -5,7 +5,7 @@ include "ast.mc"
 lang TmlCheck = TmlAst
     -- (question): Is there a way to type annotate interpreters?
     -- Expression -> [String]
-    sem transitionProperties =
+    sem edgeProperties =
     | Properties properties -> foldl (lam n. lam p.
         match p with Guard _ then {n with guards = addi n.guards 1} else
         match p with Sync _ then {n with syncs = addi n.syncs 1} else
@@ -13,8 +13,8 @@ lang TmlCheck = TmlAst
         error "Malformed Properties")
         { guards = 0, syncs = 0, resets = 0 } properties
 
-    | Transition (a, b, properties) ->
-        let n = transitionProperties properties in
+    | Edge (a, b, properties) ->
+        let n = edgeProperties properties in
 
         let semErrString = lam a. lam b. lam n. lam s.
             concat "Semantic error: " (concat a (concat " -> " (concat b
@@ -26,23 +26,23 @@ lang TmlCheck = TmlAst
         concat (semErrCheck a b n.guards "guards")
             (concat (semErrCheck a b n.syncs "syncs")
             (semErrCheck a b n.resets "resets"))
-    | Program (_, transitions) ->
-        join (map (lam t. transitionProperties t) transitions)
+    | Program (_, edges) ->
+        join (map (lam e. edgeProperties e) edges)
 
     -- Expression -> [String]
-    sem initialState =
-    | Program (states, _) ->
-        let iss = filter (lam s.
-            match s with State (_, initial, _) then
+    sem initialLocation =
+    | Program (locations, _) ->
+        let iss = filter (lam l.
+            match l with Location (_, initial, _) then
                 initial
-            else error "Malformed State") states in
+            else error "Malformed Location") locations in
         if neqi (length iss) 1 then
-            [concat "Semantic error: " (concat (int2string (length iss)) " initial states")]
+            [concat "Semantic error: " (concat (int2string (length iss)) " initial locations")]
         else []
 
     -- Expression -> [String]
     sem check =
     | Program p ->
-        concat (initialState (Program p)) (transitionProperties (Program p))
+        concat (initialLocation (Program p)) (edgeProperties (Program p))
         -- ^(question): Is there a way to get what we're matching on: Program p
 end

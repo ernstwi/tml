@@ -1,4 +1,4 @@
-Semantic error: 2 initial states
+Semantic error: 2 initial locations
 Semantic error: foo -> bar: 2 guards
 Semantic error: foo -> bar: 3 syncs
 Semantic error: foo -> bar: 2 resets

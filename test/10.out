@@ -1,5 +1,6 @@
 {
-    "states": [
+    "edges": [],
+    "locations": [
         {
             "id": "foo",
             "initial": true,
@@ -10,6 +11,5 @@
             "initial": false,
             "invariant": "x<10&y<=25"
         }
-    ],
-    "transitions": []
+    ]
 }

@@ -22,20 +22,20 @@ lang TmlEval = TmlAst
         ("guard", match og with Some g then eval g else JsonNull ()),
         ("sync", match os with Some s then eval s else JsonNull ()),
         ("reset", match or with Some r then eval r else JsonNull ())]
-    | Transition (a, b, props) ->
+    | Edge (a, b, props) ->
         JsonObject (concat [
             ("from", JsonString a),
             ("to", JsonString b)] (eval props))
     | InvariantConjunct (x, cmp, n) ->
         concat x (concat (cmp2string cmp) (int2string n))
     | Invariant conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
-    | State (id, initial, invariant) ->
+    | Location (id, initial, invariant) ->
         JsonObject [
             ("id", JsonString id),
             ("initial", JsonBool initial),
             ("invariant", match invariant with Some inv then eval inv else JsonNull ())]
-    | Program (states, transitions) ->
+    | Program (locations, edges) ->
         JsonObject [
-            ("states", JsonArray (map (lam s. eval s) states)),
-            ("transitions", JsonArray (map (lam t. eval t) transitions))]
+            ("locations", JsonArray (map (lam l. eval l) locations)),
+            ("edges", JsonArray (map (lam e. eval e) edges))]
 end
