@@ -1,0 +1,3 @@
+init foo
+    invar { x < 5 }
+    !

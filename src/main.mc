@@ -122,9 +122,10 @@ let location: Parser Expression =
 
 let program: Parser Expression =
     bind (many (alt (try location) edge)) (lam le.
+    bind (alt endOfInput (bind (string "\n") (lam _. endOfInput))) (lam _.
     let ls = filter (lam x. match x with Location _ then true else false) le in
     let es = filter (lam x. match x with Edge _ then true else false) le in
-    pure (Program (ls, es))) in
+    pure (Program (ls, es)))) in
 
 -- Unit tests ------------------------------------------------------------------
 

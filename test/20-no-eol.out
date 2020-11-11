@@ -1,0 +1,10 @@
+{
+    "edges": [],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
+        }
+    ]
+}
