@@ -1,0 +1,8 @@
+init foo
+default location
+    invar { x < 5 }
+default edge
+    guard { x == 10 }
+    sync { a }
+    reset { x }
+foo -> bar

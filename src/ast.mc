@@ -7,21 +7,44 @@ lang TmlAst
     | Gt ()
 
     syn Expression =
+    | Program { -- Phase 1
+        locations: [Location],
+        edges: [Edge],
+        defaultInvariant: Option Invariant,
+        defaultGuard: Option Guard,
+        defaultSync: Option Sync,
+        defaultReset: Option Reset
+    }
+
+    | Program { -- Phase 2
+        locations: [Location],
+        edges: [Edge]
+    }
+
+    | Location {
+        id: String,
+        initial: Boolean,
+        invariant: Option Invariant
+    }
+
+    | Edge {
+        from: String,
+        to: String,
+        guard: Option Guard,
+        sync: Option Sync,
+        reset: Option Reset
+    }
+
     | Reset [String]
     | Sync String
     | TwoClockGuard (String, String, Cmp, Int)
     | OneClockGuard (String, Cmp, Int)
     | GuardConjunct (Either OneClockGuard TwoClockGuard)
     | Guard [GuardConjunct]
-    | Properties (Option Guard, Option Sync, Option Reset)
-    | Properties [Expression]
-    -- ^(todo): Can we have a more descriptive type here?
-    --          What I mean: [Guard | Sync | Reset]
-    --
-    -- ^(question): Overloaded constructor name `Properties` - is this allowed?
-    | Edge (String, String, Properties)
     | InvariantConjunct (String, Cmp, Int)
     | Invariant [InvariantConjunct]
-    | Location (String, Boolean, Option Invariant)
-    | Program ([Location], [Edge])
+
+    syn Default =
+    | LocationDefault (Option Expression)
+    | EdgeDefault (Option Expression, Option Expression, Option Expression)
 end

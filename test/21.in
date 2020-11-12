@@ -1,0 +1,3 @@
+default location
+    invar { x < 5 }
+init foo

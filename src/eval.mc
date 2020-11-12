@@ -25,14 +25,13 @@ lang TmlEval = TmlAst
     | Guard conjuncts -> JsonString (strJoin "&" (map eval conjuncts))
     -- (todo): Perhaps conjuncts would be better represented as elements in a JSON
     --         array. Will see later when doing code generation from JSON.
-    | Properties (og, os, or) -> [
-        ("guard", match og with Some g then eval g else JsonNull ()),
-        ("sync", match os with Some s then eval s else JsonNull ()),
-        ("reset", match or with Some r then eval r else JsonNull ())]
-    | Edge (a, b, props) ->
-        JsonObject (concat [
+    | Edge (a, b, og, os, or) ->
+        JsonObject [
             ("from", JsonString a),
-            ("to", JsonString b)] (eval props))
+            ("to", JsonString b),
+            ("guard", match og with Some g then eval g else JsonNull ()),
+            ("sync", match os with Some s then eval s else JsonNull ()),
+            ("reset", match or with Some r then eval r else JsonNull ())]
     | InvariantConjunct (x, cmp, n) ->
         concat x (concat (cmp2string cmp) (int2string n))
     | Invariant conjuncts -> JsonString (strJoin "&" (map eval conjuncts))

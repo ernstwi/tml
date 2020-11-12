@@ -1,0 +1,20 @@
+{
+    "edges": [
+        {
+            "from": "foo",
+            "guard": "x==10",
+            "reset": [
+                "x"
+            ],
+            "sync": "a",
+            "to": "bar"
+        }
+    ],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": "x<5"
+        }
+    ]
+}

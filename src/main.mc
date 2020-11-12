@@ -5,33 +5,67 @@ include "token.mc"
 
 -- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
 --
--- Program    ::= (location | edge)*
+-- Program         ::= (location | edge | default)*
 --
--- location   ::= "init"? id ("invar {" invars "}")?
+-- location        ::= "init"? id invar?
 --
--- invars     ::= invar ("&" invar)*
--- invar      ::= id ("<=" | "<") nat
+-- invar           ::= "invar {" invarExpr "}")?
+-- invarExpr       ::= invarConjunct ("&" invarConjunct)*
+-- invarConjunct   ::= id ("<=" | "<") nat
 --
--- edge       ::= id "->" id prop*
--- prop       ::= "guard {" guards "}"
---              | "sync {" action "}"
---              | "reset {" clocks "}"
+-- edge            ::= id "->" id (guard | sync | reset)*
 --
--- guards     ::= guard ("&" guard)*
--- guard      ::= (id op nat) | (id "-" id op nat)
--- op         ::= "<=" | "<" | "==" | ">" | ">="
+-- guard           ::= "guard {" guardExpr "}"
+-- guardExpr       ::= guardConjunct ("&" guardConjunct)*
+-- guardConjunct   ::= (id op nat) | (id "-" id op nat)
+-- op              ::= "<=" | "<" | "==" | ">" | ">="
 --
--- action     ::= id /* To be extended for communication */
--- clocks     ::= id ("," id)*
+-- sync            ::= "sync {" action "}"
+-- action          ::= id /* To be extended for communication */
 --
--- id         ::= (letter | "_") (letter | "_" | digit)*
--- letter     ::= [a-zA-Z]
--- digit      ::= [0-9]
--- nat        ::= [1-9] digit*
+-- reset           ::= "reset {" clocks "}"
+-- clocks          ::= id ("," id)*
+--
+-- default         ::= locationDefault | edgeDefault
+-- locationDefault ::= "default" "location" invar
+-- edgeDefault     ::= "default" "edge" (guard | sync | reset)*
+--
+-- id              ::= (letter | "_") (letter | "_" | digit)*
+-- letter          ::= [a-zA-Z]
+-- digit           ::= [0-9]
+-- nat             ::= [1-9] digit*
 --
 -- Semantic rules:
 -- • Exactly one initial location
--- • At most one of each property per edge (guard, sync, reset)
+-- • At most one of each property per edge/edge default (guard, sync, reset)
+-- • No repeated states/edges/defaults
+
+-- Helper types and functions --------------------------------------------------
+
+type EdgePropertyError
+con EdgePropertyError : (Int, String) -> EdgePropertyError
+
+let edgePropertyErrorString = lam e.
+    match e with EdgePropertyError (n, s) then
+        concat (int2string n) (concat " " s)
+    else error "Error: EdgePropertyErrorString"
+
+con SemanticFailure : (String, State) -> ParseResult
+
+let semFail = lam description. lam st.
+  SemanticFailure (description, st)
+
+let showError = lam f : ParseResult.
+  match f with Failure (found, expected, st) then
+    let pos = st.1 in
+    concat (concat (concat "Parse error at " (showPos pos)) ": ")
+    (concat (concat "Unexpected " found)
+            (if gti (length expected) 0
+             then concat ". Expected " expected
+             else ""))
+  else match f with SemanticFailure (description, _) then
+    concat "Semantic error: " description
+  else error "Tried to show something that is not a failure"
 
 -- Parsers ---------------------------------------------------------------------
 
@@ -88,16 +122,77 @@ let guard: Parser Expression =
     bind (symbol "}") (lam _.
     pure (Guard cs))))) in
 
-let properties: Parser Expression =
-    bind (many (alt guard (alt sync reset))) (lam ps.
-    pure (Properties ps)) in
+-- Edge property helper functions
+
+let edgePropertiesExtract: [Expression] -> Either EdgePropertyError (Option Expression)
+    = lam f. lam s. lam props.
+        let res = filter f props in
+        match (length res) with 0 then
+            Right (None ())
+        else match (length res) with 1 then
+            Right (Some (head res))
+        else
+            Left (EdgePropertyError ((length res), s)) in
+
+let edgePropertiesGuard: [Expression] -> Either EdgePropertyError (Option Guard)
+    = lam props. edgePropertiesExtract
+        (lam p. match p with Guard _ then true else false)
+        "guards"
+        props in
+
+let edgePropertiesSync: [Expression] -> Either EdgePropertyError (Option Sync)
+    = lam props. edgePropertiesExtract
+        (lam p. match p with Sync _ then true else false)
+        "syncs"
+        props in
+
+let edgePropertiesReset: [Expression] -> Either EdgePropertyError (Option Reset)
+    = lam props. edgePropertiesExtract
+        (lam p. match p with Reset _ then true else false)
+        "resets"
+        props in
+
+-- [Guard | Sync | Reset] -> [Option Guard, Option Sync, Option Reset]
+let edgePropertiesCooked: [Expression] -> Either EdgePropertyError [Expression] =
+    lam props.
+        let res = [
+            edgePropertiesGuard props,
+            edgePropertiesSync props,
+            edgePropertiesReset props
+        ] in
+        match eitherLefts res with [] then
+            Right (eitherRights res)
+        else Left (head (eitherLefts res)) in
+        -- (todo): Just returning the first error. This is ok.
+---
+
+let edgeProperties: Parser [Expression] =
+    fmap edgePropertiesCooked (many (alt guard (alt sync reset))) in
 
 let edge: Parser Expression =
     bind identifier (lam a.
     bind (symbol "->") (lam _.
     bind identifier (lam b.
-    bind properties (lam props.
-    pure (Edge (a, b, props)))))) in
+    bind edgeProperties (lam props.
+    eitherEither
+        (lam e. semFail (edgePropertyErrorString e))
+        (lam props. pure (Edge (a, b, get props 0, get props 1, get props 2)))
+        props
+    )))) in
+
+utest testParser edge "foo -> bar guard { x < 5 }" with
+Success (
+    Edge ("foo", "bar",
+        Some (Guard [GuardConjunct (Left (OneClockGuard ("x", Lt (), 5)))]),
+        None (),
+        None ()
+    ), ("", {file="", row=1, col=27})) in
+
+utest testParser edge "foo -> bar guard { x < 5 } guard { x < 5 }" with
+SemanticFailure (("2 guards"),(([]),{file = ([]),row = 1,col = 43})) in
+utest showError (testParser edge "foo -> bar guard { x < 5 } guard { x < 5 }") with
+"Semantic error at 1:43: 2 guards" in
+-- ^(todo): Improve on the error reporting, position.
 
 let invariantConjunct: Parser Expression =
     bind identifier (lam id.
@@ -120,12 +215,68 @@ let location: Parser Expression =
     bind (optional invariant) (lam invar.
     pure (Location (id, match init with Some _ then true else false, invar)))))) in
 
+let edgeDefault: Parser Expression =
+    bind (string "edge") (lam _.
+    bind edgeProperties (lam props.
+    eitherEither
+        (lam e. semFail (edgePropertyErrorString e))
+        (lam props. pure (EdgeDefault (get props 0, get props 1, get props 2)))
+        props
+    )) in
+
+let locationDefault: Parser Expression =
+    bind (string "location") (lam _.
+    bind invariant (lam invar.
+    pure (LocationDefault (Some invar)))) in
+
+let default: Parser Expression =
+    bind (string "default") (lam _.
+    alt locationDefault edgeDefault) in
+
+-- Cook an array of possibly multiple Defaults to one set of properties
+let defaultsCooked: [Default] -> Either EdgePropertyError [Expression] = lam ds.
+    match length ds with 0 then
+        Right []
+    else match length ds with 1 then
+        match head ds with LocationDefault oi then
+            Right [oi]
+        else match head ds with EdgeDefault (og, os, or) then
+            Right [og, os, or]
+        else never
+    else
+        Left (EdgePropertyError ((length ds), match head ds with LocationDefault _ then "location defaults" else "edge defaults")) in
+
 let program: Parser Expression =
-    bind (many (alt (try location) edge)) (lam le.
+    bind (many (alt (try location) (alt edge default))) (lam xs.
     bind (alt endOfInput (bind (string "\n") (lam _. endOfInput))) (lam _.
-    let ls = filter (lam x. match x with Location _ then true else false) le in
-    let es = filter (lam x. match x with Edge _ then true else false) le in
-    pure (Program (ls, es)))) in
+    let ls = filter (lam x. match x with Location _ then true else false) xs in
+    let es = filter (lam x. match x with Edge _ then true else false) xs in
+    let lds = filter (lam x. match x with LocationDefault _ then true else false) xs in
+    let eds = filter (lam x. match x with EdgeDefault _ then true else false) xs in
+
+    let ldsCooked = defaultsCooked lds in
+    let edsCooked = defaultsCooked eds in
+
+    match ldsCooked with Left err then semFail (edgePropertyErrorString err)
+    else match edsCooked with Left err then semFail (edgePropertyErrorString err)
+    else pure (Program (ls, es,
+        match defaultsCooked lds with Right [oi] then oi else None (),
+        match defaultsCooked eds with Right [og, _, _] then og else None (),
+        match defaultsCooked eds with Right [_, os, _] then os else None (),
+        match defaultsCooked eds with Right [_, _, or] then or else None ())))) in
+
+utest testParser program "default location invar { x < 5 }" with
+Success (
+    Program ([], [],
+        Some (Invariant ([InvariantConjunct (("x"),Lt (),5)])),
+        None (),None (),None ()
+    ), ("", {file = ([]),row = 1,col = 33})) in
+
+utest testParser program "default edge reset { x }" with
+Success (Program (([]),([]),None (),None (),None (), Some (Reset ([("x")]))),(([]),{file = ([]),row = 1,col = 25})) in
+
+utest showError (testParser program "default edge reset { x } reset { y }") with
+"Semantic error at 1:37: 2 resets" in
 
 -- Unit tests ------------------------------------------------------------------
 
@@ -214,7 +365,7 @@ let pj = pyimport "json" in
 let _ = map (lam t.
     -- Parsing
     let parseResult = testParser program (readFile t) in
-    let syncheck = match parseResult with Failure _ then Some (showError parseResult) else None () in
+    let syncheck = match parseResult with Failure _ | SemanticFailure _ then Some (showError parseResult) else None () in
 
     match syncheck with Some s then
         compareAndPrint t s

@@ -1,22 +1,24 @@
 include "ast.mc"
 
 lang TmlTransform = TmlAst
-    -- Expression -> Expression, with the change
-    --     Properties [ Guard | Sync | Reset ] ->
-    --     Properties (Optional Guard, Optional Sync, Optional Reset)
-    -- to simplify code generation.
+    sem applyDefaults =
+    | Program (locations, edges, defaultInvariant, defaultGuard, defaultSync, defaultReset) ->
+        let newLocations =
+            map (lam l.
+                match l with Location (id, initial, oi) then
+                    Location (id, initial,
+                        match oi with Some _ then oi else defaultInvariant)
+                else never) locations in
+        let newEdges =
+            map (lam e.
+                match e with Edge (from, to, og, os, or) then
+                    Edge (from, to,
+                        match og with Some _ then og else defaultGuard,
+                        match os with Some _ then os else defaultSync,
+                        match or with Some _ then or else defaultReset)
+                else never) edges in
+        Program (newLocations, newEdges)
+
     sem transform =
-    | Properties properties ->
-        -- At this point we know that properties contains at most one of each
-        let o = foldl (lam o. lam p.
-            match p with Guard _ then {o with g = Some p} else
-            match p with Sync _ then {o with s = Some p} else
-            match p with Reset _ then {o with r = Some p} else
-            error "Malformed Properties")
-            {g = None (), s = None (), r = None ()} properties in
-        Properties (o.g, o.s, o.r)
-    | Edge (a, b, properties) ->
-        Edge (a, b, transform properties)
-    | Program (locations, edges) ->
-        Program (locations, map transform edges)
+    | Program p -> applyDefaults (Program p)
 end
