@@ -15,14 +15,14 @@ Shortcuts:
 
 ## Language definition
 
-EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
+EBNF variant: <https://www.w3.org/TR/REC-xml/#sec-notation>
 
 ```
 Program         ::= (location | edge | default)*
 
 location        ::= "init"? id invar?
 
-invar           ::= "invar {" invarExpr "}")?
+invar           ::= "invar {" invarExpr "}"
 invarExpr       ::= invarConjunct ("&" invarConjunct)*
 invarConjunct   ::= id ("<=" | "<") nat
 
@@ -50,6 +50,8 @@ nat             ::= [1-9] digit*
 ```
 
 Semantic rules:
-• Exactly one initial location
-• At most one of each property per edge/edge default (guard, sync, reset)
-• No repeated states/edges/defaults
+- Exactly one initial location
+- At most one of each property per edge/edge default (guard, sync, reset)
+- At most one default
+- Local properties have precedence over defaults
+- (todo): If there is a repeated location / edge definition, properties defined later have precedence
