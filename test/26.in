@@ -1,0 +1,13 @@
+init foo
+
+bar
+    invar { x < 5 }
+
+bar
+    invar { y < 10 }
+
+foo -> bar
+    reset { x }
+
+foo -> bar
+    reset { y }
