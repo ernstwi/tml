@@ -4,45 +4,6 @@ include "tsa-cooked.mc"
 include "tsa.mc"
 include "token.mc"
 
--- Language definition ---------------------------------------------------------
-
--- EBNF variant: https://www.w3.org/TR/REC-xml/#sec-notation
---
--- Program         ::= (location | edge | default)*
---
--- location        ::= "init"? id invar?
---
--- invar           ::= "invar {" invarExpr "}")?
--- invarExpr       ::= invarConjunct ("&" invarConjunct)*
--- invarConjunct   ::= id ("<=" | "<") nat
---
--- edge            ::= id "->" id (guard | sync | reset)*
---
--- guard           ::= "guard {" guardExpr "}"
--- guardExpr       ::= guardConjunct ("&" guardConjunct)*
--- guardConjunct   ::= (id op nat) | (id "-" id op nat)
--- op              ::= "<=" | "<" | "==" | ">" | ">="
---
--- sync            ::= "sync {" action "}"
--- action          ::= id /* To be extended for communication */
---
--- reset           ::= "reset {" clocks "}"
--- clocks          ::= id ("," id)*
---
--- default         ::= locationDefault | edgeDefault
--- locationDefault ::= "default" "location" invar
--- edgeDefault     ::= "default" "edge" (guard | sync | reset)*
---
--- id              ::= (letter | "_") (letter | "_" | digit)*
--- letter          ::= [a-zA-Z]
--- digit           ::= [0-9]
--- nat             ::= [1-9] digit*
---
--- Semantic rules:
--- • Exactly one initial location
--- • At most one of each property per edge/edge default (guard, sync, reset)
--- • No repeated states/edges/defaults
-
 -- Helper types and functions --------------------------------------------------
 
 type EdgePropertyError
