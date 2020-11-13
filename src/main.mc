@@ -191,8 +191,7 @@ Success (
 utest testParser edge "foo -> bar guard { x < 5 } guard { x < 5 }" with
 SemanticFailure (("2 guards"),(([]),{file = ([]),row = 1,col = 43})) in
 utest showError (testParser edge "foo -> bar guard { x < 5 } guard { x < 5 }") with
-"Semantic error at 1:43: 2 guards" in
--- ^(todo): Improve on the error reporting, position.
+"Semantic error: 2 guards" in
 
 let invariantConjunct: Parser Expression =
     bind identifier (lam id.
@@ -276,7 +275,7 @@ utest testParser program "default edge reset { x }" with
 Success (Program (([]),([]),None (),None (),None (), Some (Reset ([("x")]))),(([]),{file = ([]),row = 1,col = 25})) in
 
 utest showError (testParser program "default edge reset { x } reset { y }") with
-"Semantic error at 1:37: 2 resets" in
+"Semantic error: 2 resets" in
 
 -- Unit tests ------------------------------------------------------------------
 
