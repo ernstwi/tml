@@ -1,4 +1,7 @@
-include "tml.mc"
+include "tsa-base.mc"
+include "tsa-raw.mc"
+include "tsa-cooked.mc"
+include "tsa.mc"
 include "token.mc"
 
 -- Language definition ---------------------------------------------------------
@@ -69,7 +72,7 @@ let showError = lam f : ParseResult.
 
 -- Parsers ---------------------------------------------------------------------
 
-mexpr use TML in
+mexpr use TSA in
 
 let lt: Parser Cmp = bind (symbol "<") (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
@@ -322,16 +325,16 @@ utest testParser reset "reset { }" with
 Failure (("'}'"),("valid identifier"),(("}"),{file = ([]),row = 1,col = 9})) in
 
 utest testParser reset "reset { foo }" with
-Success (TmlAst_Reset ([("foo")]),(([]),{file = ([]),row = 1,col = 14})) in
+Success (Reset ([("foo")]),(([]),{file = ([]),row = 1,col = 14})) in
 
 utest testParser reset "reset { foo bar }" with
 Failure (("'b'"),("'}'"),(("bar }"),{file = ([]),row = 1,col = 13})) in
 
 utest testParser reset "reset { foo, bar }" with
-Success (TmlAst_Reset ([("foo"),("bar")]),(([]),{file = ([]),row = 1,col = 19})) in
+Success (Reset ([("foo"),("bar")]),(([]),{file = ([]),row = 1,col = 19})) in
 
 utest testParser reset "reset { foo, bar, baz }" with
-Success (TmlAst_Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 24})) in
+Success (Reset ([("foo"),("bar"),("baz")]),(([]),{file = ([]),row = 1,col = 24})) in
 
 -- Main ------------------------------------------------------------------------
 

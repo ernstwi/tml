@@ -1,9 +1,14 @@
 include "either.mc"
 include "json.mc"
+include "tsa-base.mc"
 
-include "ast.mc"
+lang TsaCooked = TsaBase
+    syn Expression =
+    | Program {
+        locations: [Location],
+        edges: [Edge]
+    }
 
-lang TmlEval = TmlAst
     sem cmp2string =
     | Lt () -> "<"
     | LtEq () -> "<="

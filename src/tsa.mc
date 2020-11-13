@@ -1,6 +1,7 @@
-include "ast.mc"
+lang TSA = TsaRaw + TsaCooked
+    sem transform =
+    | Program p -> applyDefaults (Program p)
 
-lang TmlTransform = TmlAst
     sem applyDefaults =
     | Program (locations, edges, defaultInvariant, defaultGuard, defaultSync, defaultReset) ->
         let newLocations =
@@ -18,7 +19,5 @@ lang TmlTransform = TmlAst
                         match or with Some _ then or else defaultReset)
                 else never) edges in
         Program (newLocations, newEdges)
-
-    sem transform =
-    | Program p -> applyDefaults (Program p)
 end
+
