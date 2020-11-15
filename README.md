@@ -13,9 +13,11 @@ Shortcuts:
 - `make quiet`: Run tests, suppress compiler output
 - `make utest`: Run unit tests
 
-## Language definition
+# Language definition
 
 EBNF variant: <https://www.w3.org/TR/REC-xml/#sec-notation>
+
+## Base
 
 ```
 Program         ::= (location | edge | default)*
@@ -41,8 +43,6 @@ guardExpr       ::= guardConjunct ("&" guardConjunct)*
 guardConjunct   ::= (id op nat) | (id "-" id op nat)
 op              ::= "<=" | "<" | "==" | ">" | ">="
 
-action          ::= id /* To be extended for communication */
-
 clocks          ::= id ("," id)*
 
 id              ::= (letter | "_") (letter | "_" | digit)*
@@ -59,3 +59,12 @@ Validity constraints:
 Semantic rules:
 - Local properties have precedence over defaults
 - If there is a repeated property, properties defined later have precedence
+
+## InternalAction
+
+```
+action ::= id
+```
+
+Validity constraints (example):
+- Id must start with "a"
