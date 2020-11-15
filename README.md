@@ -20,7 +20,9 @@ EBNF variant: <https://www.w3.org/TR/REC-xml/#sec-notation>
 ## Base
 
 ```
-Program         ::= (location | edge | default)*
+Program         ::= statement*
+
+statement       ::= location | edge | default
 
 location        ::= "init"? id property*
 edge            ::= id "->" id property*
@@ -52,13 +54,16 @@ nat             ::= [1-9] digit*
 ```
 
 Validity constraints:
-- Exactly one initial location
-- Properties on a location (or location default) must be invar
-- Properties on an edge (or edge default) must be guard, sync, or reset
+- Exactly one initial location.
+- Properties on a location (or location default) must be invar.
+- Properties on an edge (or edge default) must be guard, sync, or reset.
+- A statement has at most one of each type of property.
 
 Semantic rules:
-- Local properties have precedence over defaults
-- If there is a repeated property, properties defined later have precedence
+- Default statements define properties which apply to all following location/edge statements.
+- Properties defined in location/edge statements have precedence over defaults.
+- Multiple statements `s1`, `s2`, ... `sn` referencing the same location/edge are allowed. For every `sx`, `sy` where `y > x`, properites in `sy` have precedence over properties in `sx`.
+    - This also applies to default statements.
 
 ## InternalAction
 
@@ -67,4 +72,4 @@ action ::= id
 ```
 
 Validity constraints (example):
-- Id must start with "a"
+- Id must start with "a".
