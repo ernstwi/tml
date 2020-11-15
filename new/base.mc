@@ -85,10 +85,25 @@ lang Base
             properties
         ) with Some _ then
             [concat "Location property on edge " (concat from
-                (concat " -> " to))]
-        else [])
+                (concat " -> " to))] else [])
         (concat
         (repeatedProperties (concat from (concat " -> " to)) properties)
+        (join (map checkProperty properties)))
+    | LocationDefault properties ->
+        concat
+        (match (find (lam p.
+            match p with Invariant _ then false else true) properties)
+        with Some _ then ["Edge property on location default"] else [])
+        (repeatedProperties "default location" properties)
+    | EdgeDefault properties ->
+        concat
+        (match (find
+            (lam p.  match p with Invariant _ then true else false)
+            properties
+        ) with Some _ then
+            ["Location property on edge default"] else [])
+        (concat
+        (repeatedProperties "default edge" properties)
         (join (map checkProperty properties)))
 
     -- checkProgram: Program -> [String]
@@ -112,4 +127,5 @@ utest checkProgram [Location ("foo", true, [Reset ["x"]])] with ["Edge property 
 utest checkProgram [Location ("foo", true, []), Edge ("foo", "bar", [Reset ["x"], Invariant []])] with ["Location property on edge foo -> bar"] in
 utest checkProgram [] with ["0 initial locations"] in
 utest checkProgram [Location ("foo", true, [ Invariant [], Invariant []]), Edge ("foo", "bar", [Reset ["x"], Reset ["y"]])] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
+utest checkProgram [Location ("foo", true, []), EdgeDefault [Reset ["x"], Invariant []]] with ["Location property on edge default"] in
 ()
