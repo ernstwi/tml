@@ -8,42 +8,58 @@ lang TSA = Base + InternalAction
 
 mexpr
 
+use TSA in
+
+let action: Parser Action =
+    bind identifier (lam id.
+    pure (InternalAction id)) in
+
 use Base in
 
-let program: Parser Program = many statement in
+--------------------------------------------------------------------------------
 
-let statement: Parser Statement = alt (try location) (alt edge default) in
+let lt:   Parser Cmp = bind (symbol "<")  (lam _. pure (Lt ())) in
+let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
+let eq:   Parser Cmp = bind (symbol "==") (lam _. pure (Eq ())) in
+let gtEq: Parser Cmp = bind (symbol ">=") (lam _. pure (GtEq ())) in
+let gt:   Parser Cmp = bind (symbol ">")  (lam _. pure (Gt ())) in
 
-let location: Parser Statement =
-    bind (optional (string "init")) (lam init.
-    bind identifier (lam id.
-    bind (notFollowedBy (symbol "->")) (lam _.
-    bind (many property) (lam ps.
-    pure (Location (id, match init with Some _ then true else false, ps)))))) in
+--------------------------------------------------------------------------------
 
-let edge: Parser Statement =
+let cmp: Parser Cmp =
+    alt eq (alt ltEq (alt lt (alt gtEq gt))) in
+
+let cmpInvar: Parser Cmp =
+    alt ltEq lt in
+
+--------------------------------------------------------------------------------
+
+let oneClockGuard: Parser GuardConjunct =
     bind identifier (lam a.
-    bind (symbol "->") (lam _.
+    bind cmp (lam c.
+    bind number (lam n.
+    pure (OneClockGuard (a, c, n))))) in
+    
+let twoClockGuard: Parser GuardConjunct =
+    bind identifier (lam a.
+    bind (symbol "-") (lam _.
     bind identifier (lam b.
-    bind (many property) (lam ps.
-    pure (Edge (a, b, ps)))))) in
+    bind cmp (lam c.
+    bind number (lam n.
+    pure (TwoClockGuard (a, b, c, n))))))) in
 
-let default: Parser Statement =
-    bind (string "default") (lam _.
-    alt locationDefault edgeDefault) in
+--------------------------------------------------------------------------------
 
-let locationDefault: Parser Statement =
-    bind (string "location") (lam _.
-    bind (many property) (lam ps.
-    pure (LocationDefault ps))) in
+let invariantConjunct: Parser InvariantConjunct =
+    bind identifier (lam id.
+    bind cmpInvar (lam c.
+    bind number (lam n.
+    pure (InvariantConjunct (id, c, n))))) in
 
-let edgeDefault: Parser Statement =
-    bind (string "edge") (lam _.
-    bind (many property) (lam ps.
-    pure (EdgeDefault ps))) in
+let guardConjunct: Parser GuardConjunct =
+    alt (try oneClockGuard) twoClockGuard in
 
-let property: Parser Property =
-    alt invariant (alt guard (alt sync reset)) in
+--------------------------------------------------------------------------------
 
 let invariant: Parser Property =
     bind (string "invar") (lam _.
@@ -51,7 +67,8 @@ let invariant: Parser Property =
     bind (sepBy (symbol "&") invariantConjunct) (lam cs.
     bind (symbol "}") (lam _.
     pure (Invariant cs))))) in
-    
+
+
 let guard: Parser Property =
     bind (string "guard") (lam _.
     bind (symbol "{") (lam _.
@@ -74,44 +91,49 @@ let reset: Parser Property =
     bind (symbol "}") (lam _.
     pure (Reset (cons c cs))))))) in
 
-let invariantConjunct: Parser InvariantConjunct =
+--------------------------------------------------------------------------------
+
+let property: Parser Property =
+    alt invariant (alt guard (alt sync reset)) in
+
+--------------------------------------------------------------------------------
+
+let locationDefault: Parser Statement =
+    bind (string "location") (lam _.
+    bind (many property) (lam ps.
+    pure (LocationDefault ps))) in
+
+let edgeDefault: Parser Statement =
+    bind (string "edge") (lam _.
+    bind (many property) (lam ps.
+    pure (EdgeDefault ps))) in
+
+--------------------------------------------------------------------------------
+
+let location: Parser Statement =
+    bind (optional (string "init")) (lam init.
     bind identifier (lam id.
-    bind cmpInvar (lam c.
-    bind number (lam n.
-    pure (InvariantConjunct (id, c, n))))) in
+    bind (notFollowedBy (symbol "->")) (lam _.
+    bind (many property) (lam ps.
+    pure (Location (id, match init with Some _ then true else false, ps)))))) in
 
-let guardConjunct: Parser GuardConjunct =
-    alt (try oneClockGuard) twoClockGuard in
-
-let oneClockGuard: Parser GuardConjunct =
+let edge: Parser Statement =
     bind identifier (lam a.
-    bind cmp (lam c.
-    bind number (lam n.
-    pure (OneClockGuard (a, c, n))))) in
-    
-let twoClockGuard: Parser GuardConjunct =
-    bind identifier (lam a.
-    bind (symbol "-") (lam _.
+    bind (symbol "->") (lam _.
     bind identifier (lam b.
-    bind cmp (lam c.
-    bind number (lam n.
-    pure (TwoClockGuard (a, b, c, n))))))) in
+    bind (many property) (lam ps.
+    pure (Edge (a, b, ps)))))) in
 
-let cmp: Parser Cmp =
-    alt eq (alt ltEq (alt lt (alt gtEq gt))) in
+let default: Parser Statement =
+    bind (string "default") (lam _.
+    alt locationDefault edgeDefault) in
 
-let cmpInvar: Parser Cmp =
-    alt ltEq lt in
+--------------------------------------------------------------------------------
 
-let lt:   Parser Cmp = bind (symbol "<")  (lam _. pure (Lt ())) in
-let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
-let eq:   Parser Cmp = bind (symbol "==") (lam _. pure (Eq ())) in
-let gtEq: Parser Cmp = bind (symbol ">=") (lam _. pure (GtEq ())) in
-let gt:   Parser Cmp = bind (symbol ">")  (lam _. pure (Gt ())) in
+let statement: Parser Statement = alt (try location) (alt edge default) in
 
-use TSA in
-let action: Parser Action =
-    bind identifier (lam id.
-    pure (InternalAction id)) in
+--------------------------------------------------------------------------------
+
+let program: Parser Program = many statement in
 
 ()
