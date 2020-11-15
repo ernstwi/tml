@@ -1,10 +1,5 @@
-include "base.mc"
-include "internal-action.mc"
+include "tsa.mc"
 include "token.mc"
-
--- Language containing every "shallow" feature of TML (= features that can be
--- compiled to the base TSA model).
-lang TSA = Base + InternalAction
 
 mexpr
 
