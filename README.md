@@ -20,28 +20,30 @@ EBNF variant: <https://www.w3.org/TR/REC-xml/#sec-notation>
 ```
 Program         ::= (location | edge | default)*
 
-location        ::= "init"? id invar?
+location        ::= "init"? id property*
+edge            ::= id "->" id property*
+default         ::= locationDefault | edgeDefault
+
+locationDefault ::= "default" "location" property*
+edgeDefault     ::= "default" "edge" property*
+
+property        ::= invar | guard | sync | reset
 
 invar           ::= "invar {" invarExpr "}"
+guard           ::= "guard {" guardExpr "}"
+sync            ::= "sync {" action "}"
+reset           ::= "reset {" clocks "}"
+
 invarExpr       ::= invarConjunct ("&" invarConjunct)*
 invarConjunct   ::= id ("<=" | "<") nat
 
-edge            ::= id "->" id (guard | sync | reset)*
-
-guard           ::= "guard {" guardExpr "}"
 guardExpr       ::= guardConjunct ("&" guardConjunct)*
 guardConjunct   ::= (id op nat) | (id "-" id op nat)
 op              ::= "<=" | "<" | "==" | ">" | ">="
 
-sync            ::= "sync {" action "}"
 action          ::= id /* To be extended for communication */
 
-reset           ::= "reset {" clocks "}"
 clocks          ::= id ("," id)*
-
-default         ::= locationDefault | edgeDefault
-locationDefault ::= "default" "location" invar
-edgeDefault     ::= "default" "edge" (guard | sync | reset)*
 
 id              ::= (letter | "_") (letter | "_" | digit)*
 letter          ::= [a-zA-Z]
@@ -49,9 +51,11 @@ digit           ::= [0-9]
 nat             ::= [1-9] digit*
 ```
 
-Semantic rules:
+Validity constraints:
 - Exactly one initial location
-- At most one of each property per edge/edge default (guard, sync, reset)
-- At most one default
+- Properties on a location (or location default) must be invar
+- Properties on an edge (or edge default) must be guard, sync, or reset
+
+Semantic rules:
 - Local properties have precedence over defaults
-- (todo): If there is a repeated location / edge definition, properties defined later have precedence
+- If there is a repeated property, properties defined later have precedence
