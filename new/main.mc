@@ -54,7 +54,7 @@ let invariantConjunct: Parser InvariantConjunct =
     bind identifier (lam id.
     bind cmpInvar (lam c.
     bind number (lam n.
-    pure (InvariantConjunct (id, c, n))))) in
+    pure (id, c, n)))) in
 
 let guardConjunct: Parser GuardConjunct =
     alt (try oneClockGuard) twoClockGuard in
