@@ -45,6 +45,8 @@ lang Base
     | GtEq ()
     | Gt ()
 
+-- Validity checks -------------------------------------------------------------
+
     -- checkAction: Action -> [String]
     sem checkAction =
     | _ -> []
