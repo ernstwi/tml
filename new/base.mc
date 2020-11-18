@@ -1,3 +1,4 @@
+include "hashmap.mc"
 include "string.mc"
 
 -- Base language fragment, to be used in combination with other fragments. Not
@@ -8,6 +9,9 @@ let unwrap: [Option a] -> [a] =
     lam seq. map
         (lam ox. match ox with Some x then x else never)
         (filter (lam ox. match ox with Some _ then true else false) seq)
+
+let insert = hashmapInsert hashmapStrTraits
+let values = hashmapValues hashmapStrTraits
 
 type Model = ([Location], [Edge])
 type Location = {
@@ -26,6 +30,15 @@ type Edge = {
 type ProgramRaw = [StatementRaw]
 type ProgramCooked = [StatementCooked]
 type InvariantConjunct = (String, Cmp, Int)
+
+type EvalEnv = {
+    locations: HashMap String Location,
+    edges: HashMap (String, String) Location,
+    defaultInvariant: Option Property,
+    defaultGuard: Option Property,
+    defaultSync: Option Property,
+    defaultReset: Option Property
+}
 
 lang Base
     syn StatementRaw =
@@ -220,10 +233,50 @@ lang Base
 
 -- Evaluation ------------------------------------------------------------------
 
+    -- evalStatement: EvalEnv -> StatementCooked -> EvalEnv
+    sem evalStatement (env: EvalEnv) =
+    | LocationStmtCooked (id, initial, invariant) ->
+        { env with locations =
+            insert id (id, initial,
+                match invariant with Some _ then invariant else env.defaultInvariant
+            ) env.locations
+        }
+    | EdgeStmtCooked (from, to, guard, sync, reset) ->
+        let id = concat from (concat " -> " to) in
+        -- ^(todo): Use tuple as key.
+        { env with edges =
+            insert id (id,
+                match guard with Some _ then guard else env.defaultGuard,
+                match sync with Some _ then sync else env.defaultSync,
+                match reset with Some _ then reset else env.defaultReset
+            ) env.edges
+        }
+    | LocationDefaultCooked oi ->
+        match oi with Some i then { env with defaultInvariant = oi }
+        else env
+    | EdgeDefaultCooked (og, os, or) ->
+        let ng = match og with Some g then og else env.defaultGuard in
+        let ns = match os with Some s then os else env.defaultSync in
+        let nr = match or with Some r then or else env.defaultReset in
+        {{{ env with defaultGuard = ng } with defaultSync = ns }
+            with defaultReset = nr }
+
     -- evalProgram: ProgramCooked -> Model
     --
     -- Apply semantic rules on a Program, creating a Model.
-    -- sem evalProgram =
+    sem evalProgram =
+    | statements ->
+        let env: EvalEnv = {
+            locations = hashmapEmpty,
+            edges = hashmapEmpty,
+            defaultInvariant = None (),
+            defaultGuard = None (),
+            defaultSync = None (),
+            defaultReset = None ()
+        } in
+        let res = foldl (lam e. lam s. evalStatement e s) env statements in
+        (values res.locations, values res.edges)
+
 
 -- Code generation -------------------------------------------------------------
 
@@ -260,5 +313,18 @@ utest cookProgram [
         None (),
         Some (Reset [ "x" ]))
 ] in
+
+utest evalProgram [
+    LocationStmtCooked ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
+    LocationDefaultCooked (Some (Invariant [("z", LtEq (), 100)])),
+    LocationStmtCooked ("bar", false,  Some (Invariant [("y", Lt (), 44)])),
+    LocationStmtCooked ("baz", false,  None ())
+] with ([
+    ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
+    ("baz", false,  Some (Invariant [("z", LtEq (), 100)])),
+    ("bar", false,  Some (Invariant [("y", Lt (), 44)]))
+], []) in
+-- ^(note): Sorting of locations, edges, is undefined. Getting values from
+--          hashmap. This is ok, they are sorted in JSON formatting later.
 
 ()
