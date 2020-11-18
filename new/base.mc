@@ -266,9 +266,14 @@ lang Base
         initial = initial,
         invariant = invariant
     } -> { env with locations =
-            insert id (id, initial,
-                match invariant with Some _ then invariant else env.defaultInvariant
-            ) env.locations
+            insert id {
+                id = id,
+                initial = initial,
+                invariant =
+                    match invariant with Some _ then
+                        invariant
+                    else env.defaultInvariant
+            } env.locations
         }
     | EdgeStmtCooked {
         from = from,
@@ -279,11 +284,13 @@ lang Base
     } -> let id = concat from (concat " -> " to) in
         -- ^(todo): Use tuple as key.
         { env with edges =
-            insert id (id,
-                match guard with Some _ then guard else env.defaultGuard,
-                match sync with Some _ then sync else env.defaultSync,
-                match reset with Some _ then reset else env.defaultReset
-            ) env.edges
+            insert id {
+                from = from,
+                to = to,
+                guard = match guard with Some _ then guard else env.defaultGuard,
+                sync = match sync with Some _ then sync else env.defaultSync,
+                reset = match reset with Some _ then reset else env.defaultReset
+            } env.edges
         }
     | LocationDefaultCooked { invariant = oi } ->
         match oi with Some i then { env with defaultInvariant = oi }
