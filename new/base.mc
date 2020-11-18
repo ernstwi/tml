@@ -508,7 +508,6 @@ utest evalProgram [
     ],
     edges = []
 } in
--- ^(note): Sorting of locations, edges, is undefined. Getting values from
---          hashmap. This is ok, they are sorted in JSON formatting later.
+-- ^(note): Sorting of locations, edges, is undefined.
 
 ()
