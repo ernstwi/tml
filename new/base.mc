@@ -9,22 +9,58 @@ let unwrap: [Option a] -> [a] =
         (lam ox. match ox with Some x then x else never)
         (filter (lam ox. match ox with Some _ then true else false) seq)
 
+type Model = ([Location], [Edge])
+type Location = {
+    id: String,
+    initial: Boolean,
+    invariant: Option Property
+}
+type Edge = {
+    from: String,
+    to: String,
+    guard: Option Property,
+    sync: Option Property,
+    reset: Option Property
+}
 
-type Program = [Statement]
+type ProgramRaw = [StatementRaw]
+type ProgramCooked = [StatementCooked]
 type InvariantConjunct = (String, Cmp, Int)
 
 lang Base
-    syn Statement =
-    | Location {
+    syn StatementRaw =
+    | LocationStmtRaw {
         id: String,
         initial: Boolean,
         properties: [Property] }
-    | Edge {
+    | EdgeStmtRaw {
         from: String,
         to: String,
         properties: [Property] }
-    | LocationDefault [Property]
-    | EdgeDefault [Property]
+    | LocationDefaultRaw [Property]
+    | EdgeDefaultRaw [Property]
+
+    syn StatementCooked =
+    | LocationStmtCooked {
+        id: String,
+        initial: Boolean,
+        invariant: Option Property
+    }
+    | EdgeStmtCooked {
+        from: String,
+        to: String,
+        guard: Option Property,
+        sync: Option Property,
+        reset: Option Property
+    }
+    | LocationDefaultCooked {
+        invariant: Option Property
+    }
+    | EdgeDefaultCooked {
+        guard: Option Property,
+        sync: Option Property,
+        reset: Option Property
+    }
 
     syn Property =
     | Invariant [InvariantConjunct]
@@ -72,51 +108,51 @@ lang Base
         (errMsg (length (filter (lam p.
             match p with Reset _ then true else false) properties)) "resets")))
 
-    -- checkStatement: Statement -> [String]
+    -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
-    | Location (id, _, properties) ->
+    | LocationStmtRaw (id, _, properties) ->
         concat
         (match (find (lam p.
             match p with Invariant _ then false else true) properties)
-        with Some _ then [concat "Edge property on location " id] else [])
+        with Some _ then [concat "EdgeStmtRaw property on location " id] else [])
         (repeatedProperties id properties)
-    | Edge (from, to, properties) ->
+    | EdgeStmtRaw (from, to, properties) ->
         concat
         (match (find
             (lam p.  match p with Invariant _ then true else false)
             properties
         ) with Some _ then
-            [concat "Location property on edge " (concat from
+            [concat "LocationStmtRaw property on edge " (concat from
                 (concat " -> " to))] else [])
         (concat
         (repeatedProperties (concat from (concat " -> " to)) properties)
         (join (map checkProperty properties)))
-    | LocationDefault properties ->
+    | LocationDefaultRaw properties ->
         concat
         (match (find (lam p.
             match p with Invariant _ then false else true) properties)
-        with Some _ then ["Edge property on location default"] else [])
+        with Some _ then ["EdgeStmtRaw property on location default"] else [])
         (repeatedProperties "default location" properties)
-    | EdgeDefault properties ->
+    | EdgeDefaultRaw properties ->
         concat
         (match (find
             (lam p.  match p with Invariant _ then true else false)
             properties
         ) with Some _ then
-            ["Location property on edge default"] else [])
+            ["LocationStmtRaw property on edge default"] else [])
         (concat
         (repeatedProperties "default edge" properties)
         (join (map checkProperty properties)))
 
-    -- checkProgram: Program -> [String]
+    -- checkProgram: ProgramRaw -> [String]
     --
-    -- Check validity constraints on a Program, returning a sequence of error
+    -- Check validity constraints on a ProgramRaw, returning a sequence of error
     -- messages.
     sem checkProgram =
     | statements ->
         join (cons
             (let inits = (length (filter
-                (lam s. match s with Location (_, true, _) then true
+                (lam s. match s with LocationStmtRaw (_, true, _) then true
                 else false) statements)) in
             if neqi inits 1 then
                 [concat (int2string inits) " initial locations"] else [])
@@ -125,9 +161,9 @@ end
 
 mexpr
 use Base in
-utest checkProgram [Location ("foo", true, [Reset ["x"]])] with ["Edge property on location foo"] in
-utest checkProgram [Location ("foo", true, []), Edge ("foo", "bar", [Reset ["x"], Invariant []])] with ["Location property on edge foo -> bar"] in
+utest checkProgram [LocationStmtRaw ("foo", true, [Reset ["x"]])] with ["EdgeStmtRaw property on location foo"] in
+utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeStmtRaw ("foo", "bar", [Reset ["x"], Invariant []])] with ["LocationStmtRaw property on edge foo -> bar"] in
 utest checkProgram [] with ["0 initial locations"] in
-utest checkProgram [Location ("foo", true, [ Invariant [], Invariant []]), Edge ("foo", "bar", [Reset ["x"], Reset ["y"]])] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
-utest checkProgram [Location ("foo", true, []), EdgeDefault [Reset ["x"], Invariant []]] with ["Location property on edge default"] in
+utest checkProgram [LocationStmtRaw ("foo", true, [ Invariant [], Invariant []]), EdgeStmtRaw ("foo", "bar", [Reset ["x"], Reset ["y"]])] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
+utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeDefaultRaw [Reset ["x"], Invariant []]] with ["LocationStmtRaw property on edge default"] in
 ()

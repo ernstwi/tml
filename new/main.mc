@@ -93,42 +93,42 @@ let property: Parser Property =
 
 --------------------------------------------------------------------------------
 
-let locationDefault: Parser Statement =
+let locationDefault: Parser StatementRaw =
     bind (string "location") (lam _.
     bind (many property) (lam ps.
-    pure (LocationDefault ps))) in
+    pure (LocationDefaultRaw ps))) in
 
-let edgeDefault: Parser Statement =
+let edgeDefault: Parser StatementRaw =
     bind (string "edge") (lam _.
     bind (many property) (lam ps.
-    pure (EdgeDefault ps))) in
+    pure (EdgeDefaultRaw ps))) in
 
 --------------------------------------------------------------------------------
 
-let location: Parser Statement =
+let location: Parser StatementRaw =
     bind (optional (string "init")) (lam init.
     bind identifier (lam id.
     bind (notFollowedBy (symbol "->")) (lam _.
     bind (many property) (lam ps.
-    pure (Location (id, match init with Some _ then true else false, ps)))))) in
+    pure (LocationStmtRaw (id, match init with Some _ then true else false, ps)))))) in
 
-let edge: Parser Statement =
+let edge: Parser StatementRaw =
     bind identifier (lam a.
     bind (symbol "->") (lam _.
     bind identifier (lam b.
     bind (many property) (lam ps.
-    pure (Edge (a, b, ps)))))) in
+    pure (EdgeStmtRaw (a, b, ps)))))) in
 
-let default: Parser Statement =
+let default: Parser StatementRaw =
     bind (string "default") (lam _.
     alt locationDefault edgeDefault) in
 
 --------------------------------------------------------------------------------
 
-let statement: Parser Statement = alt (try location) (alt edge default) in
+let statement: Parser StatementRaw = alt (try location) (alt edge default) in
 
 --------------------------------------------------------------------------------
 
-let program: Parser Program = many statement in
+let program: Parser ProgramRaw = many statement in
 
 ()
