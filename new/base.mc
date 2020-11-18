@@ -1,4 +1,5 @@
 include "hashmap.mc"
+include "json.mc"
 include "string.mc"
 
 -- Base language fragment, to be used in combination with other fragments. Not
@@ -102,7 +103,7 @@ lang Base
 
     -- checkAction: Action -> [String]
     sem checkAction =
-    | _ -> []
+    | _ -> never
 
     -- checkProperty: Property -> [String]
     sem checkProperty =
@@ -316,10 +317,85 @@ lang Base
 
 -- Code generation -------------------------------------------------------------
 
+    -- jsonAction: Action -> JsonValue
+    sem jsonAction =
+    | _ -> never
+
+    sem jsonCmp =
+    | Lt ()   -> "<"
+    | LtEq () -> "<="
+    | Eq ()   -> "=="
+    | GtEq () -> ">="
+    | Gt ()   -> ">"
+
+    -- jsonProperty: Property -> JsonValue
+    sem jsonProperty =
+    | Invariant conjuncts ->
+        JsonString (strJoin "&" (map (lam c.
+            match c with (x, cmp, n) then
+                concat x (concat (jsonCmp cmp) (int2string n))
+            else never
+        ) conjuncts))
+    | Guard conjuncts ->
+        JsonString (strJoin "&" (map (lam c.
+            match c with OneClockGuard (x, cmp, n) then
+                concat x (concat (jsonCmp cmp) (int2string n))
+            else match c with TwoClockGuard (x, y, cmp, n) then
+                concat (concat (concat x (concat "-" y)) (jsonCmp cmp))
+                    (int2string n)
+            else never
+        ) conjuncts))
+    | Sync action -> jsonAction action
+    | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
+
+    -- jsonLocation: Location -> JsonValue
+    sem jsonLocation =
+    | { id = id, initial = initial, invariant = invariant } ->
+        JsonObject [
+            ("id", JsonString id),
+            ("initial", JsonBool initial),
+            ("invariant",
+                match invariant with Some i then
+                    jsonProperty i
+                else JsonNull ()
+            )
+        ]
+
+    -- jsonnEdge: Edge -> JsonValue
+    sem jsonEdge =
+    | {
+        from = from,
+        to = to,
+        guard = guard,
+        sync = sync,
+        reset = reset
+    } ->
+        JsonObject [
+            ("from", JsonString from),
+            ("to", JsonString to),
+            ("guard",
+                match guard with Some g then
+                    jsonProperty g
+                else JsonNull ()),
+            ("sync",
+                match sync with Some s then
+                    jsonProperty s
+                else JsonNull ()),
+            ("reset",
+                match reset with Some r then
+                    jsonProperty r
+                else JsonNull ())
+        ]
+
     -- jsonModel: Model -> JsonValue
     --
     -- JSON representation of a Model.
-    -- sem jsonModel =
+    sem jsonModel =
+    | { locations = locations, edges = edges } ->
+        JsonObject [
+            ("locations", JsonArray (map jsonLocation locations)),
+            ("edges", JsonArray (map jsonEdge edges))
+        ]
 end
 
 -- Unit tests ------------------------------------------------------------------

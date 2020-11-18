@@ -1,3 +1,4 @@
+include "json.mc"
 include "string.mc"
 
 lang InternalAction
@@ -11,4 +12,8 @@ lang InternalAction
             []
         else
             [concat "Invalid InternalAction id: " s]
+
+    -- jsonAction: Action -> JsonValue
+    sem jsonAction =
+    | InternalAction s -> JsonString s
 end
