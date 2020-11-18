@@ -157,6 +157,28 @@ lang Base
             if neqi inits 1 then
                 [concat (int2string inits) " initial locations"] else [])
             (map checkStatement statements))
+
+-- Cook ------------------------------------------------------------------------
+
+    -- cookProgram: ProgramRaw -> ProgramCooked
+    --
+    -- Transform a raw parsed program to a cooked version, to prepare for
+    -- evaluation.
+    -- sem cookProgram =
+
+-- Evaluation ------------------------------------------------------------------
+
+    -- evalProgram: ProgramCooked -> Model
+    --
+    -- Apply semantic rules on a Program, creating a Model.
+    -- sem evalProgram =
+
+-- Code generation -------------------------------------------------------------
+
+    -- jsonModel: Model -> JsonValue
+    --
+    -- JSON representation of a Model.
+    -- sem jsonModel =
 end
 
 mexpr
