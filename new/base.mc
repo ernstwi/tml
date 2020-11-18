@@ -160,11 +160,63 @@ lang Base
 
 -- Cook ------------------------------------------------------------------------
 
+    -- cookProperties: (Property -> Boolean) -> [Property] -> Option Property
+    sem cookProperties (f: Property -> Boolean) =
+    | properties ->
+        let seq = filter f properties in
+        if gti (length seq) 0 then
+             -- We know from validity constraints that length of seq is 1
+            Some (head seq)
+        else
+            None ()
+
+    -- cookInvariant: [Property] -> Option Property
+    sem cookInvariant =
+    | properties ->
+        cookProperties
+            (lam p. match p with Invariant _ then true else false)
+            properties
+
+    -- cookGuard: [Property] -> Option Property
+    sem cookGuard =
+    | properties ->
+        cookProperties
+            (lam p. match p with Guard _ then true else false)
+            properties
+
+    -- cookSync: [Property] -> Option Property
+    sem cookSync =
+    | properties ->
+        cookProperties
+            (lam p. match p with Sync _ then true else false)
+            properties
+
+    -- cookReset: [Property] -> Option Property
+    sem cookReset =
+    | properties ->
+        cookProperties
+            (lam p. match p with Reset _ then true else false)
+            properties
+
+    -- cookStatement: StatementRaw -> StatementCooked
+    sem cookStatement =
+    | LocationStmtRaw (id, initial, properties) ->
+        LocationStmtCooked (id, initial, cookInvariant properties)
+    | EdgeStmtRaw (from, to, properties) ->
+        EdgeStmtCooked (from, to, cookGuard properties, cookSync properties,
+            cookReset properties)
+    | LocationDefaultRaw properties ->
+        LocationDefaultCooked cookInvariant properties
+    | EdgeDefaultRaw properties ->
+        EdgeDefaultCooked (cookGuard properties, cookSync properties,
+            cookReset properties)
+
     -- cookProgram: ProgramRaw -> ProgramCooked
     --
     -- Transform a raw parsed program to a cooked version, to prepare for
     -- evaluation.
-    -- sem cookProgram =
+    sem cookProgram =
+    | statements -> map cookStatement statements
 
 -- Evaluation ------------------------------------------------------------------
 
@@ -181,6 +233,8 @@ lang Base
     -- sem jsonModel =
 end
 
+-- Unit tests ------------------------------------------------------------------
+
 mexpr
 use Base in
 utest checkProgram [LocationStmtRaw ("foo", true, [Reset ["x"]])] with ["EdgeStmtRaw property on location foo"] in
@@ -188,4 +242,23 @@ utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeStmtRaw ("foo", "bar"
 utest checkProgram [] with ["0 initial locations"] in
 utest checkProgram [LocationStmtRaw ("foo", true, [ Invariant [], Invariant []]), EdgeStmtRaw ("foo", "bar", [Reset ["x"], Reset ["y"]])] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
 utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeDefaultRaw [Reset ["x"], Invariant []]] with ["LocationStmtRaw property on edge default"] in
+
+utest cookProgram [
+    LocationStmtRaw ("foo", true,
+        [Invariant
+            [("x", Lt (), 22)]
+        ]),
+    EdgeStmtRaw ("foo", "bar", [
+        Guard [ OneClockGuard ("x", Gt (), 10) ],
+        Reset [ "x" ]
+    ])
+] with [
+    LocationStmtCooked ("foo", true,
+        Some (Invariant [("x", Lt (), 22)])),
+    EdgeStmtCooked ("foo", "bar",
+        Some (Guard [ OneClockGuard ("x", Gt (), 10) ]),
+        None (),
+        Some (Reset [ "x" ]))
+] in
+
 ()
