@@ -110,14 +110,22 @@ let location: Parser StatementRaw =
     bind identifier (lam id.
     bind (notFollowedBy (symbol "->")) (lam _.
     bind (many property) (lam ps.
-    pure (LocationStmtRaw (id, match init with Some _ then true else false, ps)))))) in
+    pure (LocationStmtRaw {
+        id = id,
+        initial = match init with Some _ then true else false,
+        properties = ps
+    }))))) in
 
 let edge: Parser StatementRaw =
     bind identifier (lam a.
     bind (symbol "->") (lam _.
     bind identifier (lam b.
     bind (many property) (lam ps.
-    pure (EdgeStmtRaw (a, b, ps)))))) in
+    pure (EdgeStmtRaw {
+        from = a,
+        to = b,
+        properties = ps
+    }))))) in
 
 let default: Parser StatementRaw =
     bind (string "default") (lam _.

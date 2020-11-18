@@ -13,7 +13,11 @@ let unwrap: [Option a] -> [a] =
 let insert = hashmapInsert hashmapStrTraits
 let values = hashmapValues hashmapStrTraits
 
-type Model = ([Location], [Edge])
+type Model = {
+    locations: [Location],
+    edges: [Edge]
+}
+
 type Location = {
     id: String,
     initial: Boolean,
@@ -123,13 +127,13 @@ lang Base
 
     -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
-    | LocationStmtRaw (id, _, properties) ->
+    | LocationStmtRaw { id = id, initial = _, properties = properties } ->
         concat
         (match (find (lam p.
             match p with Invariant _ then false else true) properties)
         with Some _ then [concat "EdgeStmtRaw property on location " id] else [])
         (repeatedProperties id properties)
-    | EdgeStmtRaw (from, to, properties) ->
+    | EdgeStmtRaw { from = from, to = to , properties = properties } ->
         concat
         (match (find
             (lam p.  match p with Invariant _ then true else false)
@@ -165,8 +169,11 @@ lang Base
     | statements ->
         join (cons
             (let inits = (length (filter
-                (lam s. match s with LocationStmtRaw (_, true, _) then true
-                else false) statements)) in
+                (lam s. match s with LocationStmtRaw {
+                    id = _,
+                    initial = true,
+                    properties = _ }
+                then true else false) statements)) in
             if neqi inits 1 then
                 [concat (int2string inits) " initial locations"] else [])
             (map checkStatement statements))
@@ -213,16 +220,34 @@ lang Base
 
     -- cookStatement: StatementRaw -> StatementCooked
     sem cookStatement =
-    | LocationStmtRaw (id, initial, properties) ->
-        LocationStmtCooked (id, initial, cookInvariant properties)
-    | EdgeStmtRaw (from, to, properties) ->
-        EdgeStmtCooked (from, to, cookGuard properties, cookSync properties,
-            cookReset properties)
+    | LocationStmtRaw {
+        id = id,
+        initial = initial,
+        properties = properties
+    } -> LocationStmtCooked {
+            id = id,
+            initial = initial,
+            invariant = cookInvariant properties
+        }
+    | EdgeStmtRaw {
+        from = from,
+        to = to,
+        properties = properties
+    } -> EdgeStmtCooked {
+            from = from,
+            to = to,
+            guard = cookGuard properties,
+            sync = cookSync properties,
+            reset = cookReset properties
+        }
     | LocationDefaultRaw properties ->
-        LocationDefaultCooked cookInvariant properties
+        LocationDefaultCooked { invariant = cookInvariant properties }
     | EdgeDefaultRaw properties ->
-        EdgeDefaultCooked (cookGuard properties, cookSync properties,
-            cookReset properties)
+        EdgeDefaultCooked {
+            guard = cookGuard properties,
+            sync = cookSync properties,
+            reset = cookReset properties
+        }
 
     -- cookProgram: ProgramRaw -> ProgramCooked
     --
@@ -235,14 +260,22 @@ lang Base
 
     -- evalStatement: EvalEnv -> StatementCooked -> EvalEnv
     sem evalStatement (env: EvalEnv) =
-    | LocationStmtCooked (id, initial, invariant) ->
-        { env with locations =
+    | LocationStmtCooked {
+        id = id,
+        initial = initial,
+        invariant = invariant
+    } -> { env with locations =
             insert id (id, initial,
                 match invariant with Some _ then invariant else env.defaultInvariant
             ) env.locations
         }
-    | EdgeStmtCooked (from, to, guard, sync, reset) ->
-        let id = concat from (concat " -> " to) in
+    | EdgeStmtCooked {
+        from = from,
+        to = to,
+        guard = guard,
+        sync = sync,
+        reset = reset
+    } -> let id = concat from (concat " -> " to) in
         -- ^(todo): Use tuple as key.
         { env with edges =
             insert id (id,
@@ -251,10 +284,14 @@ lang Base
                 match reset with Some _ then reset else env.defaultReset
             ) env.edges
         }
-    | LocationDefaultCooked oi ->
+    | LocationDefaultCooked { invariant = oi } ->
         match oi with Some i then { env with defaultInvariant = oi }
         else env
-    | EdgeDefaultCooked (og, os, or) ->
+    | EdgeDefaultCooked {
+        guard = og,
+        sync = os,
+        reset = or
+    } ->
         let ng = match og with Some g then og else env.defaultGuard in
         let ns = match os with Some s then os else env.defaultSync in
         let nr = match or with Some r then or else env.defaultReset in
@@ -275,8 +312,7 @@ lang Base
             defaultReset = None ()
         } in
         let res = foldl (lam e. lam s. evalStatement e s) env statements in
-        (values res.locations, values res.edges)
-
+        { locations = values res.locations, edges = values res.edges }
 
 -- Code generation -------------------------------------------------------------
 
@@ -288,42 +324,107 @@ end
 
 -- Unit tests ------------------------------------------------------------------
 
-mexpr
-use Base in
-utest checkProgram [LocationStmtRaw ("foo", true, [Reset ["x"]])] with ["EdgeStmtRaw property on location foo"] in
-utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeStmtRaw ("foo", "bar", [Reset ["x"], Invariant []])] with ["LocationStmtRaw property on edge foo -> bar"] in
+mexpr use Base in
+
+utest checkProgram [
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = [Reset ["x"]]
+    }
+] with ["EdgeStmtRaw property on location foo"] in
+
+utest checkProgram [
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = []
+    }, EdgeStmtRaw {
+        from = "foo",
+        to = "bar",
+        properties = [Reset ["x"], Invariant []]
+    }
+] with ["LocationStmtRaw property on edge foo -> bar"] in
+
 utest checkProgram [] with ["0 initial locations"] in
-utest checkProgram [LocationStmtRaw ("foo", true, [ Invariant [], Invariant []]), EdgeStmtRaw ("foo", "bar", [Reset ["x"], Reset ["y"]])] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
-utest checkProgram [LocationStmtRaw ("foo", true, []), EdgeDefaultRaw [Reset ["x"], Invariant []]] with ["LocationStmtRaw property on edge default"] in
+
+utest checkProgram [
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = [ Invariant [], Invariant []]
+    }, EdgeStmtRaw {
+        from = "foo",
+        to = "bar",
+        properties = [Reset ["x"], Reset ["y"]]
+    }
+] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
+
+utest checkProgram [
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = []
+    }, EdgeDefaultRaw [Reset ["x"], Invariant []]]
+with ["LocationStmtRaw property on edge default"] in
 
 utest cookProgram [
-    LocationStmtRaw ("foo", true,
-        [Invariant
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = [Invariant
             [("x", Lt (), 22)]
-        ]),
-    EdgeStmtRaw ("foo", "bar", [
-        Guard [ OneClockGuard ("x", Gt (), 10) ],
-        Reset [ "x" ]
-    ])
+        ]
+    }, EdgeStmtRaw {
+        from = "foo",
+        to = "bar",
+        properties = [
+            Guard [ OneClockGuard ("x", Gt (), 10) ],
+            Reset [ "x" ]
+        ]
+    }
 ] with [
-    LocationStmtCooked ("foo", true,
-        Some (Invariant [("x", Lt (), 22)])),
-    EdgeStmtCooked ("foo", "bar",
-        Some (Guard [ OneClockGuard ("x", Gt (), 10) ]),
-        None (),
-        Some (Reset [ "x" ]))
+    LocationStmtCooked {
+        id = "foo",
+        initial = true,
+        invariant = Some (Invariant [("x", Lt (), 22)])
+    },
+    EdgeStmtCooked {
+        from = "foo",
+        to = "bar",
+        guard = Some (Guard [ OneClockGuard ("x", Gt (), 10) ]),
+        sync = None (),
+        reset = Some (Reset [ "x" ])
+    }
 ] in
 
 utest evalProgram [
-    LocationStmtCooked ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
-    LocationDefaultCooked (Some (Invariant [("z", LtEq (), 100)])),
-    LocationStmtCooked ("bar", false,  Some (Invariant [("y", Lt (), 44)])),
-    LocationStmtCooked ("baz", false,  None ())
-] with ([
-    ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
-    ("baz", false,  Some (Invariant [("z", LtEq (), 100)])),
-    ("bar", false,  Some (Invariant [("y", Lt (), 44)]))
-], []) in
+    LocationStmtCooked {
+        id = "foo",
+        initial = true,
+        invariant = Some (Invariant [("x", Lt (), 22)])
+    },
+    LocationDefaultCooked {
+        invariant = Some (Invariant [("z", LtEq (), 100)])
+    },
+    LocationStmtCooked {
+        id = "bar",
+        initial = false,
+        invariant = Some (Invariant [("y", Lt (), 44)])
+    },
+    LocationStmtCooked {
+        id = "baz",
+        initial = false,
+        invariant = None ()
+    }
+] with {
+    locations = [
+        ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
+        ("baz", false,  Some (Invariant [("z", LtEq (), 100)])),
+        ("bar", false,  Some (Invariant [("y", Lt (), 44)]))
+    ],
+    edges = []
+} in
 -- ^(note): Sorting of locations, edges, is undefined. Getting values from
 --          hashmap. This is ok, they are sorted in JSON formatting later.
 
