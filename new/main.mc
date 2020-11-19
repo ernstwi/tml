@@ -141,6 +141,8 @@ let program: Parser ProgramRaw = many statement in
 
 -- Main ------------------------------------------------------------------------
 
+use TSA in
+
 if eqi (length argv) 1 then () else
 
 let quiet = if eqString (get argv 1) "--quiet" then true else false in
