@@ -2,15 +2,22 @@
     "edges": [
         {
             "from": "foo",
-            "guard": "",
+            "guard": null,
             "reset": null,
             "sync": null,
             "to": "bar"
+        },
+        {
+            "from": "foo",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "baz"
         }
     ],
     "locations": [
         {
-            "id": "bar",
+            "id": "abc",
             "initial": false,
             "invariant": null
         },

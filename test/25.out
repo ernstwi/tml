@@ -1,1 +1,10 @@
-Semantic error: 2 location defaults
+{
+    "edges": [],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
+        }
+    ]
+}

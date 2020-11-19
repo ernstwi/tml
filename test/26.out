@@ -2,8 +2,10 @@
     "edges": [
         {
             "from": "foo",
-            "guard": "",
-            "reset": null,
+            "guard": null,
+            "reset": [
+                "y"
+            ],
             "sync": null,
             "to": "bar"
         }
@@ -12,7 +14,7 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": null
+            "invariant": "y<10"
         },
         {
             "id": "foo",

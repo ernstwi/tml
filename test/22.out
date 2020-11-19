@@ -14,7 +14,7 @@
         {
             "id": "foo",
             "initial": true,
-            "invariant": "x<5"
+            "invariant": null
         }
     ]
 }

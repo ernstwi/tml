@@ -2,14 +2,14 @@
     "edges": [],
     "locations": [
         {
-            "id": "foo",
-            "initial": true,
-            "invariant": null
-        },
-        {
             "id": "bar",
             "initial": false,
             "invariant": "x<10&y<=25"
+        },
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
         }
     ]
 }

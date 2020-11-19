@@ -12,13 +12,13 @@
     ],
     "locations": [
         {
-            "id": "foo",
-            "initial": true,
+            "id": "bar",
+            "initial": false,
             "invariant": null
         },
         {
-            "id": "bar",
-            "initial": false,
+            "id": "foo",
+            "initial": true,
             "invariant": null
         }
     ]

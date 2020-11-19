@@ -1,6 +1,13 @@
 {
     "edges": [
         {
+            "from": "bar",
+            "guard": "x>=5",
+            "reset": null,
+            "sync": null,
+            "to": "baz"
+        },
+        {
             "from": "foo",
             "guard": "x-y==5&z<7",
             "reset": [
@@ -10,25 +17,18 @@
             ],
             "sync": null,
             "to": "bar"
-        },
-        {
-            "from": "bar",
-            "guard": "x>=5",
-            "reset": null,
-            "sync": null,
-            "to": "baz"
         }
     ],
     "locations": [
         {
-            "id": "foo",
-            "initial": true,
-            "invariant": null
-        },
-        {
             "id": "bar",
             "initial": false,
             "invariant": "x<10"
+        },
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
         }
     ]
 }

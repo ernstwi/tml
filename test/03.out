@@ -1,17 +1,6 @@
 {
     "edges": [
         {
-            "from": "foo",
-            "guard": "x-y==5",
-            "reset": [
-                "one",
-                "two",
-                "three"
-            ],
-            "sync": "press",
-            "to": "bar"
-        },
-        {
             "from": "bar",
             "guard": null,
             "reset": [
@@ -26,18 +15,29 @@
             "reset": null,
             "sync": null,
             "to": "baz"
+        },
+        {
+            "from": "foo",
+            "guard": "x-y==5",
+            "reset": [
+                "one",
+                "two",
+                "three"
+            ],
+            "sync": "press",
+            "to": "bar"
         }
     ],
     "locations": [
         {
-            "id": "foo",
-            "initial": false,
-            "invariant": null
-        },
-        {
             "id": "bar",
             "initial": true,
             "invariant": "x<=10"
+        },
+        {
+            "id": "foo",
+            "initial": false,
+            "invariant": null
         }
     ]
 }

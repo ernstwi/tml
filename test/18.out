@@ -1,2 +1,10 @@
-Parse error at 3:5: Unexpected '!'. Expected end of input or '
-'
+{
+    "edges": [],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": "x<5"
+        }
+    ]
+}
