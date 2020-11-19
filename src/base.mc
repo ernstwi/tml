@@ -45,7 +45,7 @@ type InvariantConjunct = (String, Cmp, Int)
 
 type EvalEnv = {
     locations: HashMap String Location,
-    edges: HashMap (String, String) Location,
+    edges: HashMap String Location,
     defaultInvariant: Option Property,
     defaultGuard: Option Property,
     defaultSync: Option Property,
