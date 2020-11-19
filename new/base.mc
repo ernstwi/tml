@@ -326,7 +326,14 @@ lang Base
             defaultReset = None ()
         } in
         let res = foldl (lam e. lam s. evalStatement e s) env statements in
-        { locations = values res.locations, edges = values res.edges }
+        {
+            locations = sort
+                (lam l. lam r. subi (string2int l.id) (string2int r.id))
+                (values res.locations),
+            edges = sort
+                (lam l. lam r. subi (string2int (edgeId l.from l.to))
+                (string2int (edgeId r.from r.to))) (values res.edges)
+        }
 
 -- Code generation -------------------------------------------------------------
 
@@ -509,9 +516,9 @@ utest evalProgram [
 ] with {
     locations = [
         {
-            id = "foo",
-            initial = true,
-            invariant = Some (Invariant [("x", Lt (), 22)])
+            id = "bar",
+            initial = false,
+            invariant = Some (Invariant [("y", Lt (), 44)])
         },
         {
             id = "baz",
@@ -519,9 +526,9 @@ utest evalProgram [
             invariant = Some (Invariant [("z", LtEq (), 100)])
         },
         {
-            id = "bar",
-            initial = false,
-            invariant = Some (Invariant [("y", Lt (), 44)])
+            id = "foo",
+            initial = true,
+            invariant = Some (Invariant [("x", Lt (), 22)])
         }
     ],
     edges = []

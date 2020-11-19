@@ -1,0 +1,4 @@
+init foo
+abc
+foo -> baz
+foo -> bar
