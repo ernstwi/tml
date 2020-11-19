@@ -1,13 +1,24 @@
 include "tsa.mc"
 include "token.mc"
 
-mexpr
+-- Helper functions ------------------------------------------------------------
 
-use TSA in
+-- Parse one or more occurrences of `p` separated by single occurrences of `sep`.
+let sepBy1: Parser s -> Parser a -> Parser [a] =
+    lam sep. lam p.
+    bind p (lam hd.
+    bind (many (apr sep p)) (lam tl.
+    pure (cons hd tl)))
+
+-- TSA parsers -----------------------------------------------------------------
+
+mexpr use TSA in
 
 let action: Parser Action =
     bind identifier (lam id.
     pure (InternalAction id)) in
+
+-- Base parsers ----------------------------------------------------------------
 
 use Base in
 
@@ -59,7 +70,7 @@ let guardConjunct: Parser GuardConjunct =
 let invariant: Parser Property =
     bind (string "invar") (lam _.
     bind (symbol "{") (lam _.
-    bind (sepBy (symbol "&") invariantConjunct) (lam cs.
+    bind (sepBy1 (symbol "&") invariantConjunct) (lam cs.
     bind (symbol "}") (lam _.
     pure (Invariant cs))))) in
 
@@ -67,7 +78,7 @@ let invariant: Parser Property =
 let guard: Parser Property =
     bind (string "guard") (lam _.
     bind (symbol "{") (lam _.
-    bind (sepBy (symbol "&") guardConjunct) (lam cs.
+    bind (sepBy1 (symbol "&") guardConjunct) (lam cs.
     bind (symbol "}") (lam _.
     pure (Guard cs))))) in
 

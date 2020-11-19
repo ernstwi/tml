@@ -1,0 +1,3 @@
+init foo
+foo -> bar
+    sync { }
