@@ -557,6 +557,5 @@ utest evalProgram [
     ],
     edges = []
 } in
--- ^(note): Sorting of locations, edges, is undefined.
 
 ()
