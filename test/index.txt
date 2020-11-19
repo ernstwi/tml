@@ -7,3 +7,5 @@
 30: Empty reset
 31: Empty invariant
 32: Empty file
+33: Clear invariant, guard, sync, reset
+34: Repetition errors with Clear

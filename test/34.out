@@ -1,0 +1,4 @@
+Semantic error: foo: 2 invariants
+Semantic error: foo -> bar: 2 guards
+Semantic error: foo -> bar: 2 syncs
+Semantic error: foo -> bar: 2 resets

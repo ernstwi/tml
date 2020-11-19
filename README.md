@@ -33,10 +33,10 @@ edgeDefault     ::= "default" "edge" property*
 
 property        ::= invar | guard | sync | reset
 
-invar           ::= "invar {" invarExpr "}"
-guard           ::= "guard {" guardExpr "}"
-sync            ::= "sync {" action "}"
-reset           ::= "reset {" clocks "}"
+invar           ::= "invar" ("!" | "{" invarExpr "}")
+guard           ::= "guard" ("!" | "{" guardExpr "}")
+sync            ::= "sync" ("!" | "{" action "}")
+reset           ::= "reset" ("!" | "{" clocks "}")
 
 invarExpr       ::= invarConjunct ("&" invarConjunct)*
 invarConjunct   ::= id ("<=" | "<") nat

@@ -1,0 +1,11 @@
+init foo
+    invar!
+    invar { y < 10 }
+
+foo -> bar
+    guard!
+    sync!
+    reset!
+    guard { x == 10 }
+    sync { a }
+    reset { x }

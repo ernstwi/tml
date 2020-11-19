@@ -67,38 +67,46 @@ let guardConjunct: Parser GuardConjunct =
 
 --------------------------------------------------------------------------------
 
-let invariant: Parser Property =
+let invariant: Parser PropertyModifier =
     bind (string "invar") (lam _.
-    bind (symbol "{") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearInvariant ()))))
+    (bind (symbol "{") (lam _.
     bind (sepBy1 (symbol "&") invariantConjunct) (lam cs.
     bind (symbol "}") (lam _.
-    pure (Invariant cs))))) in
+    pure (Right (Invariant cs))))))) in
 
 
-let guard: Parser Property =
+let guard: Parser PropertyModifier =
     bind (string "guard") (lam _.
-    bind (symbol "{") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearGuard ()))))
+    (bind (symbol "{") (lam _.
     bind (sepBy1 (symbol "&") guardConjunct) (lam cs.
     bind (symbol "}") (lam _.
-    pure (Guard cs))))) in
+    pure (Right (Guard cs))))))) in
 
-let sync: Parser Property =
+let sync: Parser PropertyModifier =
     bind (string "sync") (lam _.
-    bind (symbol "{") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearSync ()))))
+    (bind (symbol "{") (lam _.
     bind action (lam a.
     bind (symbol "}") (lam _.
-    pure (Sync a))))) in
+    pure (Right (Sync a))))))) in
 
-let reset: Parser Property =
+let reset: Parser PropertyModifier =
     bind (string "reset") (lam _.
-    bind (symbol "{") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearReset ()))))
+    (bind (symbol "{") (lam _.
     bind (sepBy1 (symbol ",") identifier) (lam cs.
     bind (symbol "}") (lam _.
-    pure (Reset cs))))) in
+    pure (Right (Reset cs))))))) in
 
 --------------------------------------------------------------------------------
 
-let property: Parser Property =
+let property: Parser PropertyModifier =
     alt invariant (alt guard (alt sync reset)) in
 
 --------------------------------------------------------------------------------
@@ -207,6 +215,7 @@ let _ = map (lam t.
         else
 
         let cooked = cookProgram raw in
+        -- let _ = dprint cooked in
 
         -- Code generation
         let json = formatJson (jsonModel (evalProgram cooked)) in

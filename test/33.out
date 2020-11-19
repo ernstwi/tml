@@ -1,0 +1,18 @@
+{
+    "edges": [
+        {
+            "from": "foo",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "bar"
+        }
+    ],
+    "locations": [
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": null
+        }
+    ]
+}

@@ -1,3 +1,4 @@
+include "either.mc"
 include "hashmap.mc"
 include "json.mc"
 include "string.mc"
@@ -31,6 +32,7 @@ type Location = {
     initial: Boolean,
     invariant: Option Property
 }
+
 type Edge = {
     from: String,
     to: String,
@@ -42,6 +44,7 @@ type Edge = {
 type ProgramRaw = [StatementRaw]
 type ProgramCooked = [StatementCooked]
 type InvariantConjunct = (String, Cmp, Int)
+type PropertyModifier = Either Clear Property
 
 type EvalEnv = {
     locations: HashMap String Location,
@@ -57,35 +60,41 @@ lang Base
     | LocationStmtRaw {
         id: String,
         initial: Boolean,
-        properties: [Property] }
+        properties: [PropertyModifier] }
     | EdgeStmtRaw {
         from: String,
         to: String,
-        properties: [Property] }
-    | LocationDefaultRaw [Property]
-    | EdgeDefaultRaw [Property]
+        properties: [PropertyModifier] }
+    | LocationDefaultRaw [PropertyModifier]
+    | EdgeDefaultRaw [PropertyModifier]
 
     syn StatementCooked =
     | LocationStmtCooked {
         id: String,
         initial: Boolean,
-        invariant: Option Property
+        invariant: Option PropertyModifier
     }
     | EdgeStmtCooked {
         from: String,
         to: String,
-        guard: Option Property,
-        sync: Option Property,
-        reset: Option Property
+        guard: Option PropertyModifier,
+        sync: Option PropertyModifier,
+        reset: Option PropertyModifier
     }
     | LocationDefaultCooked {
-        invariant: Option Property
+        invariant: Option PropertyModifier
     }
     | EdgeDefaultCooked {
-        guard: Option Property,
-        sync: Option Property,
-        reset: Option Property
+        guard: Option PropertyModifier,
+        sync: Option PropertyModifier,
+        reset: Option PropertyModifier
     }
+
+    syn Clear =
+    | ClearInvariant ()
+    | ClearGuard ()
+    | ClearSync ()
+    | ClearReset ()
 
     syn Property =
     | Invariant [InvariantConjunct]
@@ -125,45 +134,51 @@ lang Base
                 [concat id (concat ": " (concat (int2string n) (concat " " s)))]
             else [] in
         concat (errMsg (length (filter (lam p.
-            match p with Invariant _ then true else false) properties)) "invariants")
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then true else false) properties)) "invariants")
         (concat (errMsg (length (filter (lam p.
-            match p with Guard _ then true else false) properties)) "guards")
+            match p with Left (ClearGuard ()) | Right (Guard _)
+            then true else false) properties)) "guards")
         (concat (errMsg (length (filter (lam p.
-            match p with Sync _ then true else false) properties)) "syncs")
+            match p with Left (ClearSync ()) | Right (Sync _)
+            then true else false) properties)) "syncs")
         (errMsg (length (filter (lam p.
-            match p with Reset _ then true else false) properties)) "resets")))
+            match p with Left (ClearReset ()) | Right (Reset _)
+            then true else false) properties)) "resets")))
 
     -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
     | LocationStmtRaw { id = id, initial = _, properties = properties } ->
         concat
         (match (find (lam p.
-            match p with Invariant _ then false else true) properties)
-        with Some _ then [concat "EdgeStmtRaw property on location " id] else [])
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then false else true) properties)
+        with Some _ then [concat "Edge property on location " id] else [])
         (repeatedProperties id properties)
     | EdgeStmtRaw { from = from, to = to , properties = properties } ->
         concat
-        (match (find
-            (lam p.  match p with Invariant _ then true else false)
-            properties
-        ) with Some _ then
-            [concat "LocationStmtRaw property on edge " (edgeId from to)] else [])
+        (match (find (lam p.
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then true else false) properties)
+        with Some _ then
+            [concat "Location property on edge " (edgeId from to)] else [])
         (concat
         (repeatedProperties (edgeId from to) properties)
         (join (map checkProperty properties)))
     | LocationDefaultRaw properties ->
         concat
         (match (find (lam p.
-            match p with Invariant _ then false else true) properties)
-        with Some _ then ["EdgeStmtRaw property on location default"] else [])
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then false else true) properties)
+        with Some _ then ["Edge property on location default"] else [])
         (repeatedProperties "default location" properties)
     | EdgeDefaultRaw properties ->
         concat
-        (match (find
-            (lam p.  match p with Invariant _ then true else false)
-            properties
-        ) with Some _ then
-            ["LocationStmtRaw property on edge default"] else [])
+        (match (find (lam p.
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then true else false) properties)
+        with Some _ then
+            ["Location property on edge default"] else [])
         (concat
         (repeatedProperties "default edge" properties)
         (join (map checkProperty properties)))
@@ -199,31 +214,27 @@ lang Base
 
     -- cookInvariant: [Property] -> Option Property
     sem cookInvariant =
-    | properties ->
-        cookProperties
-            (lam p. match p with Invariant _ then true else false)
-            properties
+    | properties -> cookProperties
+        (lam p. match p with Left (ClearInvariant ()) | Right (Invariant _)
+        then true else false) properties
 
     -- cookGuard: [Property] -> Option Property
     sem cookGuard =
-    | properties ->
-        cookProperties
-            (lam p. match p with Guard _ then true else false)
-            properties
+    | properties -> cookProperties
+        (lam p. match p with Left (ClearGuard ()) | Right (Guard _)
+        then true else false) properties
 
     -- cookSync: [Property] -> Option Property
     sem cookSync =
-    | properties ->
-        cookProperties
-            (lam p. match p with Sync _ then true else false)
-            properties
+    | properties -> cookProperties
+        (lam p. match p with Left (ClearSync ()) | Right (Sync _)
+        then true else false) properties
 
     -- cookReset: [Property] -> Option Property
     sem cookReset =
-    | properties ->
-        cookProperties
-            (lam p. match p with Reset _ then true else false)
-            properties
+    | properties -> cookProperties
+        (lam p. match p with Left (ClearReset ()) | Right (Reset _)
+        then true else false) properties
 
     -- cookStatement: StatementRaw -> StatementCooked
     sem cookStatement =
@@ -265,6 +276,20 @@ lang Base
 
 -- Evaluation ------------------------------------------------------------------
 
+    -- evalPropertyModifier: EvalEnv -> PropertyModifier -> Option Property
+    sem evalPropertyModifier (env: EvalEnv) =
+    | Left _ -> None ()
+    | Right (Invariant i) -> Some (Invariant i)
+    | Right (Guard g) -> Some (Guard g)
+    | Right (Sync s) -> Some (Sync s)
+    | Right (Reset r) -> Some (Reset r)
+
+    -- evalOptionPropertyModifier:
+    -- EvalEnv -> Option Property -> Option PropertyModifier -> Option Property
+    sem evalOptionPropertyModifier (env: EvalEnv) (default: Option Property) =
+    | Some e -> evalPropertyModifier env e
+    | None () -> default
+
     -- evalStatement: EvalEnv -> StatementCooked -> EvalEnv
     sem evalStatement (env: EvalEnv) =
     | LocationStmtCooked {
@@ -276,9 +301,7 @@ lang Base
                 id = id,
                 initial = initial,
                 invariant =
-                    match invariant with Some _ then
-                        invariant
-                    else env.defaultInvariant
+                    evalOptionPropertyModifier env env.defaultInvariant invariant
             } env.locations
         }
     | EdgeStmtCooked {
@@ -293,24 +316,25 @@ lang Base
             insert id {
                 from = from,
                 to = to,
-                guard = match guard with Some _ then guard else env.defaultGuard,
-                sync = match sync with Some _ then sync else env.defaultSync,
-                reset = match reset with Some _ then reset else env.defaultReset
+                guard =
+                    evalOptionPropertyModifier env env.defaultGuard guard,
+                sync =
+                    evalOptionPropertyModifier env env.defaultSync sync,
+                reset =
+                    evalOptionPropertyModifier env env.defaultReset reset
             } env.edges
         }
-    | LocationDefaultCooked { invariant = oi } ->
-        match oi with Some i then { env with defaultInvariant = oi }
-        else env
+    | LocationDefaultCooked { invariant = invariant } ->
+        { env with defaultInvariant =
+            evalOptionPropertyModifier env env.defaultInvariant invariant }
     | EdgeDefaultCooked {
-        guard = og,
-        sync = os,
-        reset = or
-    } ->
-        let ng = match og with Some g then og else env.defaultGuard in
-        let ns = match os with Some s then os else env.defaultSync in
-        let nr = match or with Some r then or else env.defaultReset in
-        {{{ env with defaultGuard = ng } with defaultSync = ns }
-            with defaultReset = nr }
+        guard = guard,
+        sync = sync,
+        reset = reset
+    } -> {{{ env with
+        defaultGuard = evalOptionPropertyModifier env env.defaultGuard guard } with
+        defaultSync = evalOptionPropertyModifier env env.defaultSync sync } with
+        defaultReset = evalOptionPropertyModifier env env.defaultReset reset }
 
     -- evalProgram: ProgramCooked -> Model
     --
