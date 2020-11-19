@@ -117,13 +117,8 @@ lang Base
 
 -- Validity checks -------------------------------------------------------------
 
-    -- checkAction: Action -> [String]
-    sem checkAction =
-    | _ -> never
-
     -- checkProperty: Property -> [String]
     sem checkProperty =
-    | Sync a -> checkAction a
     | _ -> []
 
     -- checkPropertyModifier: PropertyModifier -> [String]
