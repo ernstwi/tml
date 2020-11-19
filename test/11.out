@@ -1,4 +1,4 @@
-2 initial locations
-foo -> bar: 2 guards
-foo -> bar: 3 syncs
-foo -> bar: 2 resets
+Semantic error: 2 initial locations
+Semantic error: foo -> bar: 2 guards
+Semantic error: foo -> bar: 3 syncs
+Semantic error: foo -> bar: 2 resets

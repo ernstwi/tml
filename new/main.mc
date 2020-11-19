@@ -180,7 +180,8 @@ let _ = map (lam t.
 
         let semcheck = checkProgram raw in
         if gti (length semcheck) 0 then
-            compareAndPrint t (strJoin "\n" semcheck)
+            compareAndPrint t
+                (strJoin "\n" (map (lam e. concat "Semantic error: " e) semcheck))
         else
 
         let cooked = cookProgram raw in
