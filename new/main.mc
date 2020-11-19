@@ -148,7 +148,10 @@ let statement: Parser StatementRaw = alt (try location) (alt edge default) in
 
 --------------------------------------------------------------------------------
 
-let program: Parser ProgramRaw = many statement in
+let program: Parser ProgramRaw =
+    bind (many1 statement) (lam ss.
+    bind (alt (apl (string "\n") endOfInput) endOfInput) (lam _.
+    pure ss)) in
 
 -- Main ------------------------------------------------------------------------
 

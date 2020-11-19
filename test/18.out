@@ -1,10 +1,2 @@
-{
-    "edges": [],
-    "locations": [
-        {
-            "id": "foo",
-            "initial": true,
-            "invariant": "x<5"
-        }
-    ]
-}
+Parse error at FILE "test/18.in" 3:5: Unexpected '!'. Expected '
+' or end of input
