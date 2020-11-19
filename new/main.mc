@@ -119,7 +119,7 @@ let edgeDefault: Parser StatementRaw =
 let location: Parser StatementRaw =
     bind (optional (string "init")) (lam init.
     bind identifier (lam id.
-    bind (notFollowedBy (symbol "->")) (lam _.
+    bind (label "anything but ->" (notFollowedBy (symbol "->"))) (lam _.
     bind (many property) (lam ps.
     pure (LocationStmtRaw {
         id = id,
@@ -144,7 +144,16 @@ let default: Parser StatementRaw =
 
 --------------------------------------------------------------------------------
 
-let statement: Parser StatementRaw = alt (try location) (alt edge default) in
+let locationOrEdge: Parser StatementRaw =
+    lam st.
+    let res = location st in
+    match res with Failure (_, "anything but ->", _) then
+        edge st
+    else res in
+
+--------------------------------------------------------------------------------
+
+let statement: Parser StatementRaw = alt default locationOrEdge in
 
 --------------------------------------------------------------------------------
 
