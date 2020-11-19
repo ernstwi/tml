@@ -131,7 +131,7 @@ lang Base
     | Left _ -> []
     | Right p -> checkProperty p
 
-    -- repeatedProperties: String -> [Property] -> [String]
+    -- repeatedProperties: String -> [PropertyModifier] -> [String]
     sem repeatedProperties (id: String) =
     | properties ->
         let errMsg: Int -> String -> [String] = lam n. lam s.
