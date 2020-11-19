@@ -1,5 +1,4 @@
 include "json.mc"
-include "string.mc"
 
 lang InternalAction
     syn Action =
