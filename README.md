@@ -59,7 +59,7 @@ Validity constraints:
 - Properties on an edge (or edge default) must be guard, sync, or reset.
 - A statement has at most one of each type of property.
 
-Semantic rules:
+Evaluation rules:
 - Default statements define properties which apply to all following location/edge statements.
 - Properties defined in location/edge statements have precedence over defaults.
 - Multiple statements `s1`, `s2`, ... `sn` referencing the same location/edge are allowed. For every `sx`, `sy` where `y > x`, properites in `sy` have precedence over properties in `sx`.
