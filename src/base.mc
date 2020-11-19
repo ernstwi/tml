@@ -173,11 +173,11 @@ lang Base
         (concat (repeatedProperties (edgeId from to) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
-        concat (edgeProperties "default location" properties)
+        concat (edgeProperties "default" properties)
         (concat (repeatedProperties "default location" properties)
         (join (map checkPropertyModifier properties)))
     | EdgeDefaultRaw properties ->
-        concat (locationProperties "default edge" properties)
+        concat (locationProperties "default" properties)
         (concat (repeatedProperties "default edge" properties)
         (join (map checkPropertyModifier properties)))
 
@@ -449,9 +449,9 @@ utest checkProgram [
     LocationStmtRaw {
         id = "foo",
         initial = true,
-        properties = [Reset ["x"]]
+        properties = [Right (Reset ["x"])]
     }
-] with ["EdgeStmtRaw property on location foo"] in
+] with ["Edge property on location foo"] in
 
 utest checkProgram [
     LocationStmtRaw {
@@ -461,9 +461,9 @@ utest checkProgram [
     }, EdgeStmtRaw {
         from = "foo",
         to = "bar",
-        properties = [Reset ["x"], Invariant []]
+        properties = [Right (Reset ["x"]), Right (Invariant [])]
     }
-] with ["LocationStmtRaw property on edge foo -> bar"] in
+] with ["Location property on edge foo -> bar"] in
 
 utest checkProgram [] with ["0 initial locations"] in
 
@@ -471,11 +471,11 @@ utest checkProgram [
     LocationStmtRaw {
         id = "foo",
         initial = true,
-        properties = [ Invariant [], Invariant []]
+        properties = [Right (Invariant []), Right (Invariant [])]
     }, EdgeStmtRaw {
         from = "foo",
         to = "bar",
-        properties = [Reset ["x"], Reset ["y"]]
+        properties = [Right (Reset ["x"]), Right (Reset ["y"])]
     }
 ] with ["foo: 2 invariants", "foo -> bar: 2 resets"] in
 
@@ -484,36 +484,34 @@ utest checkProgram [
         id = "foo",
         initial = true,
         properties = []
-    }, EdgeDefaultRaw [Reset ["x"], Invariant []]]
-with ["LocationStmtRaw property on edge default"] in
+    }, EdgeDefaultRaw [Right (Reset ["x"]), Right (Invariant [])]]
+with ["Location property on edge default"] in
 
 utest cookProgram [
     LocationStmtRaw {
         id = "foo",
         initial = true,
-        properties = [Invariant
-            [("x", Lt (), 22)]
-        ]
+        properties = [Right (Invariant [("x", Lt (), 22)]) ]
     }, EdgeStmtRaw {
         from = "foo",
         to = "bar",
         properties = [
-            Guard [ OneClockGuard ("x", Gt (), 10) ],
-            Reset [ "x" ]
+            Right (Guard [ OneClockGuard ("x", Gt (), 10) ]),
+            Right (Reset [ "x" ])
         ]
     }
 ] with [
     LocationStmtCooked {
         id = "foo",
         initial = true,
-        invariant = Some (Invariant [("x", Lt (), 22)])
+        invariant = Some (Right (Invariant [("x", Lt (), 22)]))
     },
     EdgeStmtCooked {
         from = "foo",
         to = "bar",
-        guard = Some (Guard [ OneClockGuard ("x", Gt (), 10) ]),
+        guard = Some (Right (Guard [ OneClockGuard ("x", Gt (), 10) ])),
         sync = None (),
-        reset = Some (Reset [ "x" ])
+        reset = Some (Right (Reset [ "x" ]))
     }
 ] in
 
@@ -521,15 +519,15 @@ utest evalProgram [
     LocationStmtCooked {
         id = "foo",
         initial = true,
-        invariant = Some (Invariant [("x", Lt (), 22)])
+        invariant = Some (Right (Invariant [("x", Lt (), 22)]))
     },
     LocationDefaultCooked {
-        invariant = Some (Invariant [("z", LtEq (), 100)])
+        invariant = Some (Right (Invariant [("z", LtEq (), 100)]))
     },
     LocationStmtCooked {
         id = "bar",
         initial = false,
-        invariant = Some (Invariant [("y", Lt (), 44)])
+        invariant = Some (Right (Invariant [("y", Lt (), 44)]))
     },
     LocationStmtCooked {
         id = "baz",

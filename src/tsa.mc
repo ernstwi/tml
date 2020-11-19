@@ -16,7 +16,7 @@ utest checkProgram [
     }, EdgeStmtRaw {
         from = "foo",
         to = "bar",
-        properties = [Sync (InternalAction "az")]
+        properties = [Right (Sync (InternalAction "az"))]
     }
 ] with [] in
 
