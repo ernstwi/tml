@@ -151,41 +151,38 @@ lang Base
             match p with Left (ClearReset ()) | Right (Reset _)
             then true else false) properties)) "resets")))
 
+    -- edgeProperties: String -> [PropertyModifier] -> [String]
+    sem edgeProperties (id: String) =
+    | properties ->
+        match (find (lam p.
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then false else true) properties)
+        with Some _ then [concat "Edge property on location " id] else []
+
+    -- locationProperties: String -> [PropertyModifier] -> [String]
+    sem locationProperties (id: String) =
+    | properties ->
+        match (find (lam p.
+            match p with Left (ClearInvariant ()) | Right (Invariant _)
+            then true else false) properties)
+        with Some _ then [concat "Location property on edge " id] else []
+
     -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
     | LocationStmtRaw { id = id, initial = _, properties = properties } ->
         concat
-        (match (find (lam p.
-            match p with Left (ClearInvariant ()) | Right (Invariant _)
-            then false else true) properties)
-        with Some _ then [concat "Edge property on location " id] else [])
+        (edgeProperties id properties)
         (repeatedProperties id properties)
     | EdgeStmtRaw { from = from, to = to , properties = properties } ->
-        concat
-        (match (find (lam p.
-            match p with Left (ClearInvariant ()) | Right (Invariant _)
-            then true else false) properties)
-        with Some _ then
-            [concat "Location property on edge " (edgeId from to)] else [])
-        (concat
-        (repeatedProperties (edgeId from to) properties)
+        concat (locationProperties (edgeId from to) properties)
+        (concat (repeatedProperties (edgeId from to) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
-        concat
-        (match (find (lam p.
-            match p with Left (ClearInvariant ()) | Right (Invariant _)
-            then false else true) properties)
-        with Some _ then ["Edge property on location default"] else [])
+        concat (edgeProperties "default location" properties)
         (repeatedProperties "default location" properties)
     | EdgeDefaultRaw properties ->
-        concat
-        (match (find (lam p.
-            match p with Left (ClearInvariant ()) | Right (Invariant _)
-            then true else false) properties)
-        with Some _ then
-            ["Location property on edge default"] else [])
-        (concat
-        (repeatedProperties "default edge" properties)
+        concat (locationProperties "default edge" properties)
+        (concat (repeatedProperties "default edge" properties)
         (join (map checkPropertyModifier properties)))
 
     -- checkProgram: ProgramRaw -> [String]
