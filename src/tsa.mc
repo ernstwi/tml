@@ -1,23 +1,23 @@
-lang TSA = TsaRaw + TsaCooked
-    sem transform =
-    | Program p -> applyDefaults (Program p)
+include "base.mc"
+include "internal-action.mc"
 
-    sem applyDefaults =
-    | Program (locations, edges, defaultInvariant, defaultGuard, defaultSync, defaultReset) ->
-        let newLocations =
-            map (lam l.
-                match l with Location (id, initial, oi) then
-                    Location (id, initial,
-                        match oi with Some _ then oi else defaultInvariant)
-                else never) locations in
-        let newEdges =
-            map (lam e.
-                match e with Edge (from, to, og, os, or) then
-                    Edge (from, to,
-                        match og with Some _ then og else defaultGuard,
-                        match os with Some _ then os else defaultSync,
-                        match or with Some _ then or else defaultReset)
-                else never) edges in
-        Program (newLocations, newEdges)
-end
+-- Language containing every "shallow" feature of TML (= features that can be
+-- compiled to the base TSA model).
 
+lang TSA = Base + InternalAction
+
+mexpr use TSA in
+
+utest checkProgram [
+    LocationStmtRaw {
+        id = "foo",
+        initial = true,
+        properties = []
+    }, EdgeStmtRaw {
+        from = "foo",
+        to = "bar",
+        properties = [Sync (InternalAction "az")]
+    }
+] with [] in
+
+()

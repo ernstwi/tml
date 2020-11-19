@@ -1,6 +1,6 @@
-include "parser-combinators.mc"
+-- Tokenizers from standard library.
 
--- Tokenizers (from stdlib) ----------------------------------------------------
+include "parser-combinators.mc"
 
 let ws: Parser () = void (many spaces1)
 
@@ -40,8 +40,6 @@ let identifier: Parser String =
     then fail (concat (concat "keyword '" x) "'") "identifier"
     else pure x)
   )
-
--- Unit tests ------------------------------------------------------------------
 
 utest showError (testParser identifier "guard")
 with "Parse error at 1:1: Unexpected keyword 'guard'. Expected identifier"
