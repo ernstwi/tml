@@ -7,11 +7,7 @@ lang InternalAction
 
     -- checkAction: Action -> [String]
     sem checkAction =
-    | InternalAction s ->
-        if eqChar (head s) 'a' then
-            []
-        else
-            [concat "Invalid InternalAction id: " s]
+    | InternalAction s -> []
 
     -- jsonAction: Action -> JsonValue
     sem jsonAction =

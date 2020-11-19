@@ -16,18 +16,6 @@ utest checkProgram [
     }, EdgeStmtRaw {
         from = "foo",
         to = "bar",
-        properties = [Sync (InternalAction "baz")]
-    }
-] with ["Invalid InternalAction id: baz"] in
-
-utest checkProgram [
-    LocationStmtRaw {
-        id = "foo",
-        initial = true,
-        properties = []
-    }, EdgeStmtRaw {
-        from = "foo",
-        to = "bar",
         properties = [Sync (InternalAction "az")]
     }
 ] with [] in

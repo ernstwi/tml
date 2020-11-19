@@ -70,6 +70,3 @@ Semantic rules:
 ```
 action ::= id
 ```
-
-Validity constraints (example):
-- Id must start with "a".
