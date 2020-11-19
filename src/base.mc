@@ -126,6 +126,11 @@ lang Base
     | Sync a -> checkAction a
     | _ -> []
 
+    -- checkPropertyModifier: PropertyModifier -> [String]
+    sem checkPropertyModifier =
+    | Left _ -> []
+    | Right p -> checkProperty p
+
     -- repeatedProperties: String -> [Property] -> [String]
     sem repeatedProperties (id: String) =
     | properties ->
@@ -164,7 +169,7 @@ lang Base
             [concat "Location property on edge " (edgeId from to)] else [])
         (concat
         (repeatedProperties (edgeId from to) properties)
-        (join (map checkProperty properties)))
+        (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
         concat
         (match (find (lam p.
@@ -181,7 +186,7 @@ lang Base
             ["Location property on edge default"] else [])
         (concat
         (repeatedProperties "default edge" properties)
-        (join (map checkProperty properties)))
+        (join (map checkPropertyModifier properties)))
 
     -- checkProgram: ProgramRaw -> [String]
     --
