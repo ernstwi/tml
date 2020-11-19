@@ -200,8 +200,9 @@ lang Base
 
 -- Cook ------------------------------------------------------------------------
 
-    -- cookProperties: (Property -> Boolean) -> [Property] -> Option Property
-    sem cookProperties (f: Property -> Boolean) =
+    -- cookProperties:
+    -- (PropertyModifier -> Boolean) -> [PropertyModifier] -> Option PropertyModifier
+    sem cookProperties (f: PropertyModifier -> Boolean) =
     | properties ->
         let seq = filter f properties in
         if gti (length seq) 0 then
@@ -210,25 +211,25 @@ lang Base
         else
             None ()
 
-    -- cookInvariant: [Property] -> Option Property
+    -- cookInvariant: [PropertyModifier] -> Option PropertyModifier
     sem cookInvariant =
     | properties -> cookProperties
         (lam p. match p with Left (ClearInvariant ()) | Right (Invariant _)
         then true else false) properties
 
-    -- cookGuard: [Property] -> Option Property
+    -- cookGuard: [PropertyModifier] -> Option PropertyModifier
     sem cookGuard =
     | properties -> cookProperties
         (lam p. match p with Left (ClearGuard ()) | Right (Guard _)
         then true else false) properties
 
-    -- cookSync: [Property] -> Option Property
+    -- cookSync: [PropertyModifier] -> Option PropertyModifier
     sem cookSync =
     | properties -> cookProperties
         (lam p. match p with Left (ClearSync ()) | Right (Sync _)
         then true else false) properties
 
-    -- cookReset: [Property] -> Option Property
+    -- cookReset: [PropertyModifier] -> Option PropertyModifier
     sem cookReset =
     | properties -> cookProperties
         (lam p. match p with Left (ClearReset ()) | Right (Reset _)
