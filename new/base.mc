@@ -5,14 +5,21 @@ include "string.mc"
 -- Base language fragment, to be used in combination with other fragments. Not
 -- valid as a stand-alone language.
 
+-- Helper functions ------------------------------------------------------------
+
+let insert = hashmapInsert hashmapStrTraits
+let values = hashmapValues hashmapStrTraits
+
 -- Unwrap a sequence of Options, discarding Nones.
 let unwrap: [Option a] -> [a] =
     lam seq. map
         (lam ox. match ox with Some x then x else never)
         (filter (lam ox. match ox with Some _ then true else false) seq)
 
-let insert = hashmapInsert hashmapStrTraits
-let values = hashmapValues hashmapStrTraits
+let edgeId: String -> String -> String =
+    lam from. lam to. concat from (concat " -> " to)
+
+-- Types and syntactic forms ---------------------------------------------------
 
 type Model = {
     locations: [Location],
@@ -140,10 +147,9 @@ lang Base
             (lam p.  match p with Invariant _ then true else false)
             properties
         ) with Some _ then
-            [concat "LocationStmtRaw property on edge " (concat from
-                (concat " -> " to))] else [])
+            [concat "LocationStmtRaw property on edge " (edgeId from to)] else [])
         (concat
-        (repeatedProperties (concat from (concat " -> " to)) properties)
+        (repeatedProperties (edgeId from to) properties)
         (join (map checkProperty properties)))
     | LocationDefaultRaw properties ->
         concat
@@ -281,7 +287,7 @@ lang Base
         guard = guard,
         sync = sync,
         reset = reset
-    } -> let id = concat from (concat " -> " to) in
+    } -> let id = edgeId from to in
         -- ^(todo): Use tuple as key.
         { env with edges =
             insert id {
