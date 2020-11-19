@@ -502,9 +502,21 @@ utest evalProgram [
     }
 ] with {
     locations = [
-        ("foo", true,  Some (Invariant [("x", Lt (), 22)])),
-        ("baz", false,  Some (Invariant [("z", LtEq (), 100)])),
-        ("bar", false,  Some (Invariant [("y", Lt (), 44)]))
+        {
+            id = "foo",
+            initial = true,
+            invariant = Some (Invariant [("x", Lt (), 22)])
+        },
+        {
+            id = "baz",
+            initial = false,
+            invariant = Some (Invariant [("z", LtEq (), 100)])
+        },
+        {
+            id = "bar",
+            initial = false,
+            invariant = Some (Invariant [("y", Lt (), 44)])
+        }
     ],
     edges = []
 } in
