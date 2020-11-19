@@ -170,16 +170,17 @@ lang Base
     -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
     | LocationStmtRaw { id = id, initial = _, properties = properties } ->
-        concat
-        (edgeProperties id properties)
-        (repeatedProperties id properties)
+        concat (edgeProperties id properties)
+        (concat (repeatedProperties id properties)
+        (join (map checkPropertyModifier properties)))
     | EdgeStmtRaw { from = from, to = to , properties = properties } ->
         concat (locationProperties (edgeId from to) properties)
         (concat (repeatedProperties (edgeId from to) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
         concat (edgeProperties "default location" properties)
-        (repeatedProperties "default location" properties)
+        (concat (repeatedProperties "default location" properties)
+        (join (map checkPropertyModifier properties)))
     | EdgeDefaultRaw properties ->
         concat (locationProperties "default edge" properties)
         (concat (repeatedProperties "default edge" properties)
