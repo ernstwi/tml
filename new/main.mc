@@ -92,10 +92,9 @@ let sync: Parser Property =
 let reset: Parser Property =
     bind (string "reset") (lam _.
     bind (symbol "{") (lam _.
-    bind identifier (lam c.
-    bind (many (apr (symbol ",") identifier)) (lam cs.
+    bind (sepBy1 (symbol ",") identifier) (lam cs.
     bind (symbol "}") (lam _.
-    pure (Reset (cons c cs))))))) in
+    pure (Reset cs))))) in
 
 --------------------------------------------------------------------------------
 
