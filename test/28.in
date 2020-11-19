@@ -1,0 +1,17 @@
+default location
+    invar { x < 5 }
+
+default edge
+    reset { x }
+
+init foo
+foo -> bar
+
+default location
+    invar { y < 10 }
+
+default edge
+    reset { y }
+
+baz
+bar -> baz

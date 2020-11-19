@@ -1,0 +1,34 @@
+{
+    "edges": [
+        {
+            "from": "bar",
+            "guard": null,
+            "reset": [
+                "y"
+            ],
+            "sync": null,
+            "to": "baz"
+        },
+        {
+            "from": "foo",
+            "guard": null,
+            "reset": [
+                "x"
+            ],
+            "sync": null,
+            "to": "bar"
+        }
+    ],
+    "locations": [
+        {
+            "id": "baz",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": "x<5"
+        }
+    ]
+}

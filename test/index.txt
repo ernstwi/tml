@@ -1,1 +1,3 @@
+26: Overwriting local properties
 27: Sorting of locations, edges in JSON output
+28: Overwriting defaults
