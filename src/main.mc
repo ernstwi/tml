@@ -1,5 +1,19 @@
-include "tsa.mc"
+include "base.mc"
+include "internal-action.mc"
+include "sync-action.mc"
 include "token.mc"
+
+-- Language fragment compositions ----------------------------------------------
+
+-- TSA containins every "shallow" feature of TML (= features that can be
+-- compiled to the base TSA model).
+lang TSA = Base + InternalAction
+
+-- TSA with input/output actions.
+lang TsaSyncAction = TSA + SyncAction
+
+-- Equivalent to above at the moment.
+lang All = Base + InternalAction + SyncAction
 
 -- Helper functions ------------------------------------------------------------
 
@@ -10,13 +24,46 @@ let sepBy1: Parser s -> Parser a -> Parser [a] =
     bind (many (apr sep p)) (lam tl.
     pure (cons hd tl)))
 
--- TSA parsers -----------------------------------------------------------------
+-- Argument parsing ------------------------------------------------------------
 
-mexpr use TSA in
+mexpr
 
-let action: Parser Action =
+if eqi (length argv) 1 then () else
+let quiet = if eqString (get argv 1) "--quiet" then true else false in
+let write = if eqString (get argv 1) "--write" then true else false in
+let offset = (if or quiet write then 2 else 1) in
+let sourceLang = get argv offset in
+let tests = (splitAt argv (addi offset 1)).1 in
+
+-- InternalAction parsers ------------------------------------------------------
+
+use InternalAction in
+
+let internalAction: Parser Action =
     bind identifier (lam id.
     pure (InternalAction id)) in
+
+-- SyncAction parsers ----------------------------------------------------------
+
+use SyncAction in
+
+let syncAction: Parser Action =
+    bind identifier (lam id.
+    alt (apr (symbol "?") (pure (InputAction id)))
+        (apr (symbol "!") (pure (OutputAction id)))) in
+
+-- TsaSyncAction parsers -------------------------------------------------------
+
+use TsaSyncAction in
+
+let tsaSyncAction: Parser Action = alt (try syncAction) internalAction in
+
+-- Plumbing --------------------------------------------------------------------
+
+let action: Parser Action =
+    match sourceLang with "tsa" then internalAction else
+    match sourceLang with "tsa+sync" then tsaSyncAction else
+    never in
 
 -- Base parsers ----------------------------------------------------------------
 
@@ -171,13 +218,29 @@ let program: Parser ProgramRaw =
 
 -- Main ------------------------------------------------------------------------
 
-use TSA in
-
-if eqi (length argv) 1 then () else
-
-let quiet = if eqString (get argv 1) "--quiet" then true else false in
-let write = if eqString (get argv 1) "--write" then true else false in
-let tests = (splitAt argv (if or quiet write then 2 else 1)).1 in
+use All in
+-- (todo): Avoid this shortcut? With this setup, we get cases from all
+-- fragments, e.g:
+--
+-- syn Action =
+-- | InternalAction String
+-- | InputAction String
+-- | OutputAction String
+--
+-- sem jsonAction =
+-- | InternalAction id ->
+--     JsonObject [ ("type", JsonString "internal"), ("id", JsonString id) ]
+-- | InputAction id ->
+--     JsonObject [ ("type", JsonString "input"), ("id", JsonString id) ]
+-- | OutputAction id ->
+--     JsonObject [ ("type", JsonString "output"), ("id", JsonString id) ]
+-- | _ -> never
+--
+-- The negatives are
+-- 1. If we have by error e.g. created an InputAction while using TSA language,
+--    this will not be caught by jsonAction.
+-- 2. We can't have two language fragments which define different cases using
+--    the same name.
 
 let compareAndPrint = lam t. lam output.
     let outputNL = concat output "\n" in

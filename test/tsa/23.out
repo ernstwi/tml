@@ -2,24 +2,23 @@
     "edges": [
         {
             "from": "foo",
-            "guard": "x<5",
+            "guard": "x==10",
             "reset": [
-                "x"
+                "z",
+                "y"
             ],
-            "sync": "a",
+            "sync": {
+                "id": "b",
+                "type": "internal"
+            },
             "to": "bar"
         }
     ],
     "locations": [
         {
-            "id": "bar",
-            "initial": false,
-            "invariant": null
-        },
-        {
             "id": "foo",
             "initial": true,
-            "invariant": null
+            "invariant": "y<=10"
         }
     ]
 }

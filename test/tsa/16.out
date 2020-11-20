@@ -6,7 +6,10 @@
             "reset": [
                 "x"
             ],
-            "sync": "a",
+            "sync": {
+                "id": "a",
+                "type": "internal"
+            },
             "to": "bar"
         }
     ],

@@ -4,10 +4,12 @@
             "from": "foo",
             "guard": "x==10",
             "reset": [
-                "z",
-                "y"
+                "x"
             ],
-            "sync": "b",
+            "sync": {
+                "id": "a",
+                "type": "internal"
+            },
             "to": "bar"
         }
     ],
@@ -15,7 +17,7 @@
         {
             "id": "foo",
             "initial": true,
-            "invariant": "y<=10"
+            "invariant": null
         }
     ]
 }

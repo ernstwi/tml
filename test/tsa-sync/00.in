@@ -1,0 +1,7 @@
+init foo
+
+foo -> bar
+    sync { a! }
+
+bar -> baz
+    sync { b? }

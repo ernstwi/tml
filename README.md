@@ -70,3 +70,9 @@ Evaluation rules:
 ```
 action ::= id
 ```
+
+## SyncAction
+
+```
+action ::= id ("!" | "?")?
+```

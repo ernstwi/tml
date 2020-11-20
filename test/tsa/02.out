@@ -3,10 +3,11 @@
         {
             "from": "bar",
             "guard": null,
-            "reset": [
-                "four"
-            ],
-            "sync": "press",
+            "reset": null,
+            "sync": {
+                "id": "press",
+                "type": "internal"
+            },
             "to": "baz"
         },
         {
@@ -19,12 +20,11 @@
         {
             "from": "foo",
             "guard": "x-y==5",
-            "reset": [
-                "one",
-                "two",
-                "three"
-            ],
-            "sync": "press",
+            "reset": null,
+            "sync": {
+                "id": "press",
+                "type": "internal"
+            },
             "to": "bar"
         }
     ],
