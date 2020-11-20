@@ -251,8 +251,8 @@ let compareAndPrint = lam t. lam output.
         else if eqString outputNL (readFile refFile) then "pass "
         else "fail " in
 
-    let _ = printLn (concat "-- Test " (concat t (concat ": " (concat res
-        "---------------------------------------------------------------")))) in
+    let prefix = concat "-- Test " (concat t (concat ": " res)) in
+    let _ = printLn (concat prefix (makeSeq (subi 80 (length prefix)) '-')) in
     let _ = if quiet then () else print outputNL in
     ()
 in
