@@ -413,7 +413,7 @@ lang Base
             )
         ]
 
-    -- jsonnEdge: Edge -> JsonValue
+    -- jsonEdge: Edge -> JsonValue
     sem jsonEdge =
     | {
         from = from,
