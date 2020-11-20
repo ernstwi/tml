@@ -1,4 +1,7 @@
 {
+    "actions": [
+        "b"
+    ],
     "clocks": [
         "x",
         "y",

@@ -28,12 +28,16 @@ let insertLocationIfUndefined:
         insert id { id = id, initial = false, invariant = None () } m
     else m
 
+let stringSort: ([String] -> [String]) =
+    sort (lam l. lam r. subi (string2int l) (string2int r))
+
 -- Types and syntactic forms ---------------------------------------------------
 
 type Model = {
     locations: [Location],
     edges: [Edge],
-    clocks: [String]
+    clocks: [String],
+    actions: [String]
 }
 
 type Location = {
@@ -284,6 +288,10 @@ lang Base
 
 -- Evaluation ------------------------------------------------------------------
 
+    -- getIdAction: Action -> String
+    sem getIdAction =
+    | _ -> never
+
     -- evalPropertyModifier: EvalEnv -> PropertyModifier -> Option Property
     sem evalPropertyModifier (env: EvalEnv) =
     | Left _ -> None ()
@@ -352,8 +360,7 @@ lang Base
     | statements ->
         let gatherClocks: [Location] -> [Edge] -> [String] =
             lam locations. lam edges.
-            sort (lam l. lam r. subi (string2int l) (string2int r))
-            (distinct eqString (concat
+            stringSort (distinct eqString (concat
                 (join (map (lam l.
                     match l with { invariant = oi } then
                         match oi with Some (Invariant ics) then
@@ -378,6 +385,15 @@ lang Base
                         (match or with Some (Reset cs) then cs else [])
                     else never) edges)))) in
 
+        let gatherActions: [Edge] -> [String] = lam edges.
+            stringSort (distinct eqString (unwrap
+                (map (lam e.
+                    match e with { sync = os } then
+                        match os with Some (Sync a) then
+                            Some (getIdAction a)
+                        else None ()
+                    else never) edges))) in
+
         let env: EvalEnv = {
             locations = hashmapEmpty,
             edges = hashmapEmpty,
@@ -394,7 +410,8 @@ lang Base
             (lam l. lam r. subi (string2int (edgeId l.from l.to))
             (string2int (edgeId r.from r.to))) (values res.edges) in
         let clocks = gatherClocks locations edges in
-        { locations = locations, edges = edges, clocks = clocks }
+        let actions = gatherActions edges in
+        { locations = locations, edges = edges, clocks = clocks, actions = actions }
 
 -- Code generation -------------------------------------------------------------
 
@@ -472,11 +489,12 @@ lang Base
     --
     -- JSON representation of a Model.
     sem jsonModel =
-    | { locations = locations, edges = edges, clocks = clocks } ->
+    | { locations = locations, edges = edges, clocks = clocks, actions = actions } ->
         JsonObject [
             ("locations", JsonArray (map jsonLocation locations)),
             ("edges", JsonArray (map jsonEdge edges)),
-            ("clocks", JsonArray (map (lam c. JsonString c) clocks))
+            ("clocks", JsonArray (map (lam c. JsonString c) clocks)),
+            ("actions", JsonArray (map (lam a. JsonString a) actions))
         ]
 end
 

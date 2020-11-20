@@ -8,4 +8,7 @@ lang InternalAction
     sem jsonAction =
     | InternalAction id ->
         JsonObject [ ("type", JsonString "internal"), ("id", JsonString id) ]
+
+    sem getIdAction =
+    | InternalAction id -> id
 end
