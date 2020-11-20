@@ -5,8 +5,8 @@ include "token.mc"
 
 -- Language fragment compositions ----------------------------------------------
 
--- TSA containins every "shallow" feature of TML (= features that can be
--- compiled to the base TSA model).
+-- TSA contains every "shallow" feature of TML (= features that can be compiled
+-- to the base TSA model).
 lang TSA = Base + InternalAction
 
 -- TSA with input/output actions.
