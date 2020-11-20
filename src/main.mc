@@ -35,15 +35,13 @@ let offset = (if or quiet write then 2 else 1) in
 let sourceLang = get argv offset in
 let tests = (splitAt argv (addi offset 1)).1 in
 
--- InternalAction parsers ------------------------------------------------------
+-- Action parsers --------------------------------------------------------------
 
 use InternalAction in
 
 let internalAction: Parser Action =
     bind identifier (lam id.
     pure (InternalAction id)) in
-
--- SyncAction parsers ----------------------------------------------------------
 
 use SyncAction in
 
@@ -52,17 +50,15 @@ let syncAction: Parser Action =
     alt (apr (symbol "?") (pure (InputAction id)))
         (apr (symbol "!") (pure (OutputAction id)))) in
 
--- TsaSyncAction parsers -------------------------------------------------------
-
 use TsaSyncAction in
 
-let tsaSyncAction: Parser Action = alt (try syncAction) internalAction in
+let internalOrSyncAction: Parser Action = alt (try syncAction) internalAction in
 
 -- Plumbing --------------------------------------------------------------------
 
 let action: Parser Action =
     match sourceLang with "tsa" then internalAction else
-    match sourceLang with "tsa+sync" then tsaSyncAction else
+    match sourceLang with "tsa+sync" then internalOrSyncAction else
     never in
 
 -- Base parsers ----------------------------------------------------------------
