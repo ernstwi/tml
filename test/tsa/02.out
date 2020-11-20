@@ -35,6 +35,11 @@
             "invariant": "x<=10"
         },
         {
+            "id": "baz",
+            "initial": false,
+            "invariant": null
+        },
+        {
             "id": "foo",
             "initial": false,
             "invariant": null

@@ -23,6 +23,16 @@
     ],
     "locations": [
         {
+            "id": "bar",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "baz",
+            "initial": false,
+            "invariant": null
+        },
+        {
             "id": "foo",
             "initial": true,
             "invariant": null

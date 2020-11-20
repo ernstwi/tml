@@ -10,6 +10,7 @@ include "string.mc"
 
 let insert = hashmapInsert hashmapStrTraits
 let values = hashmapValues hashmapStrTraits
+let lookup = hashmapLookup hashmapStrTraits
 
 -- Unwrap a sequence of Options, discarding Nones.
 let unwrap: [Option a] -> [a] =
@@ -19,6 +20,13 @@ let unwrap: [Option a] -> [a] =
 
 let edgeId: String -> String -> String =
     lam from. lam to. concat from (concat " -> " to)
+
+let insertLocationIfUndefined:
+    HashMap String Location -> String -> HashMap String Location =
+    lam m. lam id.
+    match lookup id m with None () then
+        insert id { id = id, initial = false, invariant = None () } m
+    else m
 
 -- Types and syntactic forms ---------------------------------------------------
 
@@ -311,7 +319,7 @@ lang Base
         reset = reset
     } -> let id = edgeId from to in
         -- ^(todo): Use tuple as key.
-        { env with edges =
+        {{{ env with edges =
             insert id {
                 from = from,
                 to = to,
@@ -322,7 +330,8 @@ lang Base
                 reset =
                     evalOptionPropertyModifier env env.defaultReset reset
             } env.edges
-        }
+        } with locations = insertLocationIfUndefined env.locations from
+        } with locations = insertLocationIfUndefined env.locations to }
     | LocationDefaultCooked { invariant = invariant } ->
         { env with defaultInvariant =
             evalOptionPropertyModifier env env.defaultInvariant invariant }

@@ -21,6 +21,11 @@
     ],
     "locations": [
         {
+            "id": "bar",
+            "initial": false,
+            "invariant": null
+        },
+        {
             "id": "baz",
             "initial": false,
             "invariant": "y<10"
