@@ -32,7 +32,8 @@ let insertLocationIfUndefined:
 
 type Model = {
     locations: [Location],
-    edges: [Edge]
+    edges: [Edge],
+    clocks: [String]
 }
 
 type Location = {
@@ -349,6 +350,34 @@ lang Base
     -- Apply semantic rules on a Program, creating a Model.
     sem evalProgram =
     | statements ->
+        let gatherClocks: [Location] -> [Edge] -> [String] =
+            lam locations. lam edges.
+            sort (lam l. lam r. subi (string2int l) (string2int r))
+            (distinct eqString (concat
+                (join (map (lam l.
+                    match l with { invariant = oi } then
+                        match oi with Some (Invariant ics) then
+                            map (lam ic.
+                                match ic with (c, _, _) then
+                                    c
+                                else never) ics
+                        else []
+                    else never) locations))
+                (join (map (lam e.
+                    match e with { guard = og, reset = or} then
+                        concat
+                        (match og with Some (Guard gcs) then
+                            join
+                            (map (lam gc.
+                                match gc with OneClockGuard (c, _, _) then
+                                    [c]
+                                else match gc with TwoClockGuard (c1, c2, _, _) then
+                                    [c1, c2]
+                                else never) gcs)
+                        else [])
+                        (match or with Some (Reset cs) then cs else [])
+                    else never) edges)))) in
+
         let env: EvalEnv = {
             locations = hashmapEmpty,
             edges = hashmapEmpty,
@@ -358,14 +387,14 @@ lang Base
             defaultReset = None ()
         } in
         let res = foldl (lam e. lam s. evalStatement e s) env statements in
-        {
-            locations = sort
-                (lam l. lam r. subi (string2int l.id) (string2int r.id))
-                (values res.locations),
-            edges = sort
-                (lam l. lam r. subi (string2int (edgeId l.from l.to))
-                (string2int (edgeId r.from r.to))) (values res.edges)
-        }
+        let locations = sort
+            (lam l. lam r. subi (string2int l.id) (string2int r.id))
+            (values res.locations) in
+        let edges = sort
+            (lam l. lam r. subi (string2int (edgeId l.from l.to))
+            (string2int (edgeId r.from r.to))) (values res.edges) in
+        let clocks = gatherClocks locations edges in
+        { locations = locations, edges = edges, clocks = clocks }
 
 -- Code generation -------------------------------------------------------------
 
@@ -443,10 +472,11 @@ lang Base
     --
     -- JSON representation of a Model.
     sem jsonModel =
-    | { locations = locations, edges = edges } ->
+    | { locations = locations, edges = edges, clocks = clocks } ->
         JsonObject [
             ("locations", JsonArray (map jsonLocation locations)),
-            ("edges", JsonArray (map jsonEdge edges))
+            ("edges", JsonArray (map jsonEdge edges)),
+            ("clocks", JsonArray (map (lam c. JsonString c) clocks))
         ]
 end
 

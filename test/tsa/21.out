@@ -1,4 +1,7 @@
 {
+    "clocks": [
+        "x"
+    ],
     "edges": [],
     "locations": [
         {

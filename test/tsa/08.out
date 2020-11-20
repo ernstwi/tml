@@ -1,4 +1,9 @@
 {
+    "clocks": [
+        "x",
+        "y",
+        "z"
+    ],
     "edges": [
         {
             "from": "bar",

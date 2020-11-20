@@ -1,4 +1,7 @@
 {
+    "clocks": [
+        "y"
+    ],
     "edges": [
         {
             "from": "foo",

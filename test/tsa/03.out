@@ -1,4 +1,12 @@
 {
+    "clocks": [
+        "x",
+        "y",
+        "one",
+        "two",
+        "four",
+        "three"
+    ],
     "edges": [
         {
             "from": "bar",
