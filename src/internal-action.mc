@@ -9,6 +9,10 @@ lang InternalAction
     | InternalAction id ->
         JsonObject [ ("type", JsonString "internal"), ("id", JsonString id) ]
 
+    -- jsonActions: [String] -> JsonValue
+    sem jsonActions =
+    | actions -> ("actions", JsonArray (map (lam a. JsonString a) actions))
+
     sem getIdAction =
     | InternalAction id -> id
 end

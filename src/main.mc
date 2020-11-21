@@ -12,8 +12,6 @@ lang TSA = Base + InternalAction
 -- TSA with input/output actions.
 lang TsaSyncAction = Base + SyncAction
 
-lang All = Base + InternalAction + SyncAction
-
 -- Helper functions ------------------------------------------------------------
 
 -- Parse one or more occurrences of `p` separated by single occurrences of `sep`.
@@ -207,30 +205,6 @@ let program: Parser ProgramRaw =
 
 -- Main ------------------------------------------------------------------------
 
-use All in
--- (todo): Avoid this shortcut? With this setup, we get cases from all
--- fragments, e.g:
---
--- syn Action =
--- | InternalAction String
--- | InputAction String
--- | OutputAction String
---
--- sem jsonAction =
--- | InternalAction id ->
---     JsonObject [ ("type", JsonString "internal"), ("id", JsonString id) ]
--- | InputAction id ->
---     JsonObject [ ("type", JsonString "input"), ("id", JsonString id) ]
--- | OutputAction id ->
---     JsonObject [ ("type", JsonString "output"), ("id", JsonString id) ]
--- | _ -> never
---
--- The negatives are
--- 1. If we have by error e.g. created an InputAction while using TSA language,
---    this will not be caught by jsonAction.
--- 2. We can't have two language fragments which define different cases using
---    the same name.
-
 let compareAndPrint = lam t. lam output.
     let outputNL = concat output "\n" in
     let refFile = concat (splitAt t (subi (length t) 3)).0 ".out" in
@@ -252,7 +226,8 @@ in
 
 let pj = pyimport "json" in
 
-let _ = map (lam t.
+match sourceLang with "tsa" then use TSA in 
+map (lam t.
     let parseResult = runParser t program (readFile t) in
     
     match parseResult with Failure _ then
@@ -280,6 +255,35 @@ let _ = map (lam t.
 
         -- Compare with expected output
         compareAndPrint t jsonPretty
-) tests in
+) tests
+else match sourceLang with "tsa+sync" then use TsaSyncAction in
+map (lam t.
+    let parseResult = runParser t program (readFile t) in
+    
+    match parseResult with Failure _ then
+        compareAndPrint t (showError parseResult)
+    else
+        let raw = match parseResult with Success (x, _) then x else never in
 
-()
+        let semcheck = checkProgram raw in
+        if gti (length semcheck) 0 then
+            compareAndPrint t
+                (strJoin "\n" (map (lam e. concat "Semantic error: " e) semcheck))
+        else
+
+        let cooked = cookProgram raw in
+        -- let _ = dprint cooked in
+
+        -- Code generation
+        let json = formatJson (jsonModel (evalProgram cooked)) in
+
+        -- Json formatting
+        let jsonPy = pycall pj "loads" (json,) in
+        let jsonPyPretty = pycallkw pj "dumps" (jsonPy,)
+            { indent=4, sort_keys="True" } in
+        let jsonPretty = pyconvert jsonPyPretty in
+
+        -- Compare with expected output
+        compareAndPrint t jsonPretty
+) tests
+else never

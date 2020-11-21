@@ -290,7 +290,6 @@ lang Base
 
     -- getIdAction: Action -> String
     sem getIdAction =
-    | _ -> never
 
     -- evalPropertyModifier: EvalEnv -> PropertyModifier -> Option Property
     sem evalPropertyModifier (env: EvalEnv) =
@@ -417,7 +416,6 @@ lang Base
 
     -- jsonAction: Action -> JsonValue
     sem jsonAction =
-    | _ -> never
 
     sem jsonCmp =
     | Lt ()   -> "<"
@@ -485,6 +483,8 @@ lang Base
                 else JsonNull ())
         ]
 
+    sem jsonActions =
+
     -- jsonModel: Model -> JsonValue
     --
     -- JSON representation of a Model.
@@ -494,7 +494,7 @@ lang Base
             ("locations", JsonArray (map jsonLocation locations)),
             ("edges", JsonArray (map jsonEdge edges)),
             ("clocks", JsonArray (map (lam c. JsonString c) clocks)),
-            ("actions", JsonArray (map (lam a. JsonString a) actions))
+            jsonActions actions
         ]
 end
 
