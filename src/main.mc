@@ -10,9 +10,8 @@ include "token.mc"
 lang TSA = Base + InternalAction
 
 -- TSA with input/output actions.
-lang TsaSyncAction = TSA + SyncAction
+lang TsaSyncAction = Base + SyncAction
 
--- Equivalent to above at the moment.
 lang All = Base + InternalAction + SyncAction
 
 -- Helper functions ------------------------------------------------------------
@@ -50,22 +49,16 @@ let syncAction: Parser Action =
     alt (apr (symbol "?") (pure (InputAction id)))
         (apr (symbol "!") (pure (OutputAction id)))) in
 
-use TsaSyncAction in
-
-let internalOrSyncAction: Parser Action = alt (try syncAction) internalAction in
-
 -- Plumbing --------------------------------------------------------------------
-
-let action: Parser Action =
-    match sourceLang with "tsa" then internalAction else
-    match sourceLang with "tsa+sync" then internalOrSyncAction else
-    never in
-
--- Base parsers ----------------------------------------------------------------
 
 use Base in
 
---------------------------------------------------------------------------------
+let action: Parser Action =
+    match sourceLang with "tsa" then internalAction else
+    match sourceLang with "tsa+sync" then syncAction else
+    never in
+
+-- Base parsers ----------------------------------------------------------------
 
 let lt:   Parser Cmp = bind (symbol "<")  (lam _. pure (Lt ())) in
 let ltEq: Parser Cmp = bind (symbol "<=") (lam _. pure (LtEq ())) in
