@@ -1,5 +1,7 @@
 {
-    "actions": [],
+    "actions": [
+        "a"
+    ],
     "clocks": [
         "x",
         "y"
@@ -7,20 +9,15 @@
     "edges": [
         {
             "from": "foo",
-            "guard": null,
+            "guard": "x<5",
             "reset": [
-                "x"
-            ],
-            "sync": null,
-            "to": "bar"
-        },
-        {
-            "from": "foo",
-            "guard": null,
-            "reset": [
+                "x",
                 "y"
             ],
-            "sync": null,
+            "sync": {
+                "id": "a",
+                "type": "internal"
+            },
             "to": "bar"
         }
     ],
@@ -28,7 +25,7 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": null
         },
         {
             "id": "foo",

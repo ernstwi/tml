@@ -28,8 +28,13 @@ let insertLocationIfUndefined:
         insert id { id = id, initial = false, invariant = None () } m
     else m
 
-let stringSort: ([String] -> [String]) =
-    sort (lam l. lam r. subi (string2int l) (string2int r))
+let stringSortCmp: (a -> String) -> (String -> String) =
+    lam extractor. (lam l. lam r.
+        if ltString (extractor l) (extractor r) then negi 1
+        else if gtString (extractor l) (extractor r) then 1
+        else 0)
+
+let stringSort: [String] -> [String] = sort (stringSortCmp identity)
 
 -- Types and syntactic forms ---------------------------------------------------
 
@@ -325,19 +330,16 @@ lang Base
         guard = guard,
         sync = sync,
         reset = reset
-    } -> let id = edgeId from to in
-        -- ^(todo): Use tuple as key.
-        {{{ env with edges =
-            insert id {
-                from = from,
-                to = to,
-                guard =
-                    evalOptionPropertyModifier env env.defaultGuard guard,
-                sync =
-                    evalOptionPropertyModifier env env.defaultSync sync,
-                reset =
-                    evalOptionPropertyModifier env env.defaultReset reset
-            } env.edges
+    } ->
+        let newEdge: Edge = {
+            from = from,
+            to = to,
+            guard = evalOptionPropertyModifier env env.defaultGuard guard,
+            sync = evalOptionPropertyModifier env env.defaultSync sync,
+            reset = evalOptionPropertyModifier env env.defaultReset reset
+        } in
+        let id = formatJson (jsonEdge newEdge) in
+        {{{ env with edges = insert id newEdge env.edges
         } with locations = insertLocationIfUndefined env.locations from
         } with locations = insertLocationIfUndefined env.locations to }
     | LocationDefaultCooked { invariant = invariant } ->
@@ -403,11 +405,11 @@ lang Base
         } in
         let res = foldl (lam e. lam s. evalStatement e s) env statements in
         let locations = sort
-            (lam l. lam r. subi (string2int l.id) (string2int r.id))
+            (stringSortCmp (lam x. x.id))
             (values res.locations) in
         let edges = sort
-            (lam l. lam r. subi (string2int (edgeId l.from l.to))
-            (string2int (edgeId r.from r.to))) (values res.edges) in
+            (stringSortCmp (lam x. formatJson (jsonEdge x)))
+            (values res.edges) in
         let clocks = gatherClocks locations edges in
         let actions = gatherActions edges in
         { locations = locations, edges = edges, clocks = clocks, actions = actions }

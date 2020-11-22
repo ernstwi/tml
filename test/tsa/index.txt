@@ -10,3 +10,5 @@
 33: Clear invariant, guard, sync, reset
 34: Repetition errors with Clear
 35: Sync actions
+36: Two edges between same locations
+37: (todo):(low-priority): Two identical edges

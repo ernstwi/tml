@@ -3,12 +3,12 @@
         "press"
     ],
     "clocks": [
-        "x",
-        "y",
-        "one",
-        "two",
         "four",
-        "three"
+        "one",
+        "three",
+        "two",
+        "x",
+        "y"
     ],
     "edges": [
         {
