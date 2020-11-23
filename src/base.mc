@@ -37,9 +37,8 @@ let stringSort: [String] -> [String] = sort (stringSortCmp identity)
 let seq2string: [String] -> String = lam seq.
     concat "[" (concat (strJoin ", " seq) "]")
 
-let edgeId: [String] -> [String] -> String =
-    lam from. lam to.
-        concat (seq2string from) (concat " -> " (seq2string to))
+let edgeId: [[String]] -> String =
+    lam seq. strJoin " -> " (map seq2string seq)
 
 let semanticError: String -> String -> String =
     lam statement. lam error. concat statement (concat ": " error)
@@ -203,12 +202,8 @@ lang Base
         (concat (repeatedProperties (seq2string ids) properties)
         (join (map checkPropertyModifier properties)))
     | EdgeStmtRaw { connections = connections, properties = properties } ->
-        concat (join (map (lam p. match p with (from, to) then
-            locationProperties (edgeId from to) properties else never
-        ) (seqPairs connections)))
-        (concat (join (map (lam p. match p with (from, to) then
-            repeatedProperties (edgeId from to) properties else never
-        ) (seqPairs connections)))
+        concat (locationProperties (edgeId connections) properties)
+        (concat (repeatedProperties (edgeId connections) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
         concat (edgeProperties "[default location]" properties)
