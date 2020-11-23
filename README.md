@@ -25,7 +25,7 @@ Program          ::= statement*
 statement        ::= location | edge | default
 
 location         ::= "init"? locationSelector property*
-edge             ::= locationSelector "->" locationSelector property*
+edge             ::= locationSelector ("->" locationSelector)+ property*
 default          ::= locationDefault | edgeDefault
 
 locationSelector ::= id | "[" id ("," id)* "]"

@@ -1,0 +1,2 @@
+Semantic error: Location property on edge [a, b] -> [c]
+Semantic error: Location property on edge [c] -> [d]

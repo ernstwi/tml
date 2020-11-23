@@ -176,15 +176,13 @@ let location: Parser StatementRaw =
     }))))) in
 
 let edge: Parser StatementRaw =
-    bind locationSelector (lam from.
-    bind (symbol "->") (lam _.
-    bind locationSelector (lam to.
+    bind locationSelector (lam c.
+    bind (many1 (apr (symbol "->") locationSelector)) (lam cs.
     bind (many property) (lam ps.
     pure (EdgeStmtRaw {
-        from = from,
-        to = to,
+        connections = cons c cs,
         properties = ps
-    }))))) in
+    })))) in
 
 let default: Parser StatementRaw =
     bind (string "default") (lam _.

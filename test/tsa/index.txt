@@ -21,3 +21,5 @@
 44: Multi location selector on edge, with defaults
 45: Multi location selector on edge, semantic errors
 46: Multi location selector on edge, empty
+47: Edge chains
+48: Edge chains, semantic error

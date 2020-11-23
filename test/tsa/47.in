@@ -1,0 +1,10 @@
+init a
+
+a -> b -> c
+    reset { x }
+
+d -> e -> f
+
+default edge reset { y }
+
+[g, h] -> i -> [j, k]

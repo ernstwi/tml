@@ -44,6 +44,13 @@ let edgeId: [String] -> [String] -> String =
 let semanticError: String -> String -> String =
     lam statement. lam error. concat statement (concat ": " error)
 
+let seqPairs: [a] -> [(a, a)] = lam seq.
+    recursive let seqPairsHelper = lam seq.
+        if eqi (length seq) 1 then []
+    else
+        concat [(head seq, head (tail seq))] (seqPairsHelper (tail seq)) in
+    seqPairsHelper seq
+
 -- Types and syntactic forms ---------------------------------------------------
 
 type Model = {
@@ -88,8 +95,7 @@ lang Base
         initial: Boolean,
         properties: [PropertyModifier] }
     | EdgeStmtRaw {
-        from: [String],
-        to: [String],
+        connections: [[String]],
         properties: [PropertyModifier] }
     | LocationDefaultRaw [PropertyModifier]
     | EdgeDefaultRaw [PropertyModifier]
@@ -196,9 +202,13 @@ lang Base
         concat (edgeProperties (seq2string ids) properties)
         (concat (repeatedProperties (seq2string ids) properties)
         (join (map checkPropertyModifier properties)))
-    | EdgeStmtRaw { from = from, to = to , properties = properties } ->
-        concat (locationProperties (edgeId from to) properties)
-        (concat (repeatedProperties (edgeId from to) properties)
+    | EdgeStmtRaw { connections = connections, properties = properties } ->
+        concat (join (map (lam p. match p with (from, to) then
+            locationProperties (edgeId from to) properties else never
+        ) (seqPairs connections)))
+        (concat (join (map (lam p. match p with (from, to) then
+            repeatedProperties (edgeId from to) properties else never
+        ) (seqPairs connections)))
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
         concat (edgeProperties "[default location]" properties)
@@ -275,12 +285,10 @@ lang Base
             invariant = cookInvariant properties
         }
     | EdgeStmtRaw {
-        from = from,
-        to = to,
+        connections = connections,
         properties = properties
     } -> EdgeStmtCooked {
-            from = from,
-            to = to,
+            connections = connections,
             guard = cookGuard properties,
             sync = cookSync properties,
             reset = cookReset properties
@@ -337,22 +345,22 @@ lang Base
             } locations) env.locations ids in
         { env with locations = newLocations }
     | EdgeStmtCooked {
-        from = from,
-        to = to,
+        connections = connections,
         guard = guard,
         sync = sync,
         reset = reset
     } ->
-        let addedEdges = join (map (lam f.
-            map (lam t.  {
-                from = f,
-                to = t,
-                guard = evalOptionPropertyModifier env env.defaultGuard guard,
-                sync = evalOptionPropertyModifier env env.defaultSync sync,
-                reset = evalOptionPropertyModifier env env.defaultReset reset
-                -- ^(optimization):
-            }) to
-        ) from) in
+        let addedEdges = join (map (lam p. match p with (from, to) then
+            join (map (lam f.
+                map (lam t.  {
+                    from = f,
+                    to = t,
+                    guard = evalOptionPropertyModifier env env.defaultGuard guard,
+                    sync = evalOptionPropertyModifier env env.defaultSync sync,
+                    reset = evalOptionPropertyModifier env env.defaultReset reset
+                    -- ^(optimization):
+                }) to
+            ) from) else never) (seqPairs connections)) in
 
         let newEdges = foldl (lam edges. lam newEdge.
             insert (formatJson (jsonEdge newEdge)) newEdge edges
@@ -361,7 +369,7 @@ lang Base
         {{ env with edges = newEdges }
                with locations = foldl
                    (lam locations. lam l. insertLocationIfUndefined env locations l)
-                   env.locations (concat from to) }
+                   env.locations (join connections) }
     | LocationDefaultCooked { invariant = invariant } ->
         { env with defaultInvariant =
             evalOptionPropertyModifier env env.defaultInvariant invariant }
