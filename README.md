@@ -20,37 +20,39 @@ EBNF variant: <https://www.w3.org/TR/REC-xml/#sec-notation>
 ## Base
 
 ```
-Program         ::= statement*
+Program          ::= statement*
 
-statement       ::= location | edge | default
+statement        ::= location | edge | default
 
-location        ::= "init"? id property*
-edge            ::= id "->" id property*
-default         ::= locationDefault | edgeDefault
+location         ::= "init"? locationSelector property*
+edge             ::= locationSelector "->" locationSelector property*
+default          ::= locationDefault | edgeDefault
 
-locationDefault ::= "default" "location" property*
-edgeDefault     ::= "default" "edge" property*
+locationSelector ::= id | "[" id ("," id)* "]"
 
-property        ::= invar | guard | sync | reset
+locationDefault  ::= "default" "location" property*
+edgeDefault      ::= "default" "edge" property*
 
-invar           ::= "invar" ("!" | "{" invarExpr "}")
-guard           ::= "guard" ("!" | "{" guardExpr "}")
-sync            ::= "sync" ("!" | "{" action "}")
-reset           ::= "reset" ("!" | "{" clocks "}")
+property         ::= invar | guard | sync | reset
 
-invarExpr       ::= invarConjunct ("&" invarConjunct)*
-invarConjunct   ::= id ("<=" | "<") nat
+invar            ::= "invar" ("!" | "{" invarExpr "}")
+guard            ::= "guard" ("!" | "{" guardExpr "}")
+sync             ::= "sync" ("!" | "{" action "}")
+reset            ::= "reset" ("!" | "{" clocks "}")
 
-guardExpr       ::= guardConjunct ("&" guardConjunct)*
-guardConjunct   ::= (id op nat) | (id "-" id op nat)
-op              ::= "<=" | "<" | "==" | ">" | ">="
+invarExpr        ::= invarConjunct ("&" invarConjunct)*
+invarConjunct    ::= id ("<=" | "<") nat
 
-clocks          ::= id ("," id)*
+guardExpr        ::= guardConjunct ("&" guardConjunct)*
+guardConjunct    ::= (id op nat) | (id "-" id op nat)
+op               ::= "<=" | "<" | "==" | ">" | ">="
 
-id              ::= (letter | "_") (letter | "_" | digit)*
-letter          ::= [a-zA-Z]
-digit           ::= [0-9]
-nat             ::= [1-9] digit*
+clocks           ::= id ("," id)*
+
+id               ::= (letter | "_") (letter | "_" | digit)*
+letter           ::= [a-zA-Z]
+digit            ::= [0-9]
+nat              ::= [1-9] digit*
 ```
 
 Validity constraints:

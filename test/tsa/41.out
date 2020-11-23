@@ -1,0 +1,45 @@
+{
+    "actions": [],
+    "clocks": [
+        "x",
+        "y"
+    ],
+    "edges": [],
+    "locations": [
+        {
+            "id": "a",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "b",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "c",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "d",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "e",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "f",
+            "initial": false,
+            "invariant": "x<5"
+        },
+        {
+            "id": "g",
+            "initial": false,
+            "invariant": "x<5"
+        }
+    ]
+}

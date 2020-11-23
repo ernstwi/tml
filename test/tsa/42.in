@@ -1,0 +1,7 @@
+init foo
+    guard { x < 50 }
+
+[bar, baz]
+    guard { x < 5 }
+    guard { x < 10 }
+    invar { x < 20 }

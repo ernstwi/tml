@@ -18,14 +18,12 @@ let unwrap: [Option a] -> [a] =
         (lam ox. match ox with Some x then x else never)
         (filter (lam ox. match ox with Some _ then true else false) seq)
 
-let edgeId: String -> String -> String =
-    lam from. lam to. concat from (concat " -> " to)
-
 let insertLocationIfUndefined:
-    HashMap String Location -> String -> HashMap String Location =
-    lam m. lam id.
+    EvalEnv -> HashMap String Location -> String -> HashMap String Location =
+    lam env. lam m. lam id.
     match lookup id m with None () then
-        insert id { id = id, initial = false, invariant = None () } m
+        insert id
+            { id = id, initial = false, invariant = env.defaultInvariant } m
     else m
 
 let stringSortCmp: (a -> String) -> (String -> String) =
@@ -35,6 +33,16 @@ let stringSortCmp: (a -> String) -> (String -> String) =
         else 0)
 
 let stringSort: [String] -> [String] = sort (stringSortCmp identity)
+
+let seq2string: [String] -> String = lam seq.
+    concat "[" (concat (strJoin ", " seq) "]")
+
+let edgeId: [String] -> [String] -> String =
+    lam from. lam to.
+        concat (seq2string from) (concat " -> " (seq2string to))
+
+let semanticError: String -> String -> String =
+    lam statement. lam error. concat statement (concat ": " error)
 
 -- Types and syntactic forms ---------------------------------------------------
 
@@ -66,7 +74,7 @@ type PropertyModifier = Either Clear Property
 
 type EvalEnv = {
     locations: HashMap String Location,
-    edges: HashMap String Location,
+    edges: HashMap String Edge,
     defaultInvariant: Option Property,
     defaultGuard: Option Property,
     defaultSync: Option Property,
@@ -76,25 +84,25 @@ type EvalEnv = {
 lang Base
     syn StatementRaw =
     | LocationStmtRaw {
-        id: String,
+        ids: [String],
         initial: Boolean,
         properties: [PropertyModifier] }
     | EdgeStmtRaw {
-        from: String,
-        to: String,
+        from: [String],
+        to: [String],
         properties: [PropertyModifier] }
     | LocationDefaultRaw [PropertyModifier]
     | EdgeDefaultRaw [PropertyModifier]
 
     syn StatementCooked =
     | LocationStmtCooked {
-        id: String,
+        ids: [String],
         initial: Boolean,
         invariant: Option PropertyModifier
     }
     | EdgeStmtCooked {
-        from: String,
-        to: String,
+        from: [String],
+        to: [String],
         guard: Option PropertyModifier,
         sync: Option PropertyModifier,
         reset: Option PropertyModifier
@@ -149,7 +157,7 @@ lang Base
     | properties ->
         let errMsg: Int -> String -> [String] = lam n. lam s.
             if gti n 1 then
-                [concat id (concat ": " (concat (int2string n) (concat " " s)))]
+                [semanticError id (concat (int2string n) (concat " " s))]
             else [] in
         concat (errMsg (length (filter (lam p.
             match p with Left (ClearInvariant ()) | Right (Invariant _)
@@ -170,7 +178,9 @@ lang Base
         match (find (lam p.
             match p with Left (ClearInvariant ()) | Right (Invariant _)
             then false else true) properties)
-        with Some _ then [concat "Edge property on location " id] else []
+        with Some _ then
+            [semanticError id "Edge property on location statement"]
+        else []
 
     -- locationProperties: String -> [PropertyModifier] -> [String]
     sem locationProperties (id: String) =
@@ -182,21 +192,21 @@ lang Base
 
     -- checkStatement: StatementRaw -> [String]
     sem checkStatement =
-    | LocationStmtRaw { id = id, initial = _, properties = properties } ->
-        concat (edgeProperties id properties)
-        (concat (repeatedProperties id properties)
+    | LocationStmtRaw { ids = ids, initial = _, properties = properties } ->
+        concat (edgeProperties (seq2string ids) properties)
+        (concat (repeatedProperties (seq2string ids) properties)
         (join (map checkPropertyModifier properties)))
     | EdgeStmtRaw { from = from, to = to , properties = properties } ->
         concat (locationProperties (edgeId from to) properties)
         (concat (repeatedProperties (edgeId from to) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
-        concat (edgeProperties "default" properties)
-        (concat (repeatedProperties "default location" properties)
+        concat (edgeProperties "[default location]" properties)
+        (concat (repeatedProperties "[default location]" properties)
         (join (map checkPropertyModifier properties)))
     | EdgeDefaultRaw properties ->
-        concat (locationProperties "default" properties)
-        (concat (repeatedProperties "default edge" properties)
+        concat (locationProperties "[default edge]" properties)
+        (concat (repeatedProperties "[default edge]" properties)
         (join (map checkPropertyModifier properties)))
 
     -- checkProgram: ProgramRaw -> [String]
@@ -206,12 +216,12 @@ lang Base
     sem checkProgram =
     | statements ->
         join (cons
-            (let inits = (length (filter
+            (let inits = (foldl addi 0 (map
                 (lam s. match s with LocationStmtRaw {
-                    id = _,
+                    ids = ids,
                     initial = true,
                     properties = _ }
-                then true else false) statements)) in
+                then (length ids) else 0) statements)) in
             if neqi inits 1 then
                 [concat (int2string inits) " initial locations"] else [])
             (map checkStatement statements))
@@ -256,11 +266,11 @@ lang Base
     -- cookStatement: StatementRaw -> StatementCooked
     sem cookStatement =
     | LocationStmtRaw {
-        id = id,
+        ids = ids,
         initial = initial,
         properties = properties
     } -> LocationStmtCooked {
-            id = id,
+            ids = ids,
             initial = initial,
             invariant = cookInvariant properties
         }
@@ -313,17 +323,19 @@ lang Base
     -- evalStatement: EvalEnv -> StatementCooked -> EvalEnv
     sem evalStatement (env: EvalEnv) =
     | LocationStmtCooked {
-        id = id,
+        ids = ids,
         initial = initial,
         invariant = invariant
-    } -> { env with locations =
+    } ->
+        let newLocations = foldl (lam locations. lam id.
             insert id {
                 id = id,
                 initial = initial,
                 invariant =
                     evalOptionPropertyModifier env env.defaultInvariant invariant
-            } env.locations
-        }
+                -- ^(optimization):
+            } locations) env.locations ids in
+        { env with locations = newLocations }
     | EdgeStmtCooked {
         from = from,
         to = to,
@@ -331,17 +343,25 @@ lang Base
         sync = sync,
         reset = reset
     } ->
-        let newEdge: Edge = {
-            from = from,
-            to = to,
-            guard = evalOptionPropertyModifier env env.defaultGuard guard,
-            sync = evalOptionPropertyModifier env env.defaultSync sync,
-            reset = evalOptionPropertyModifier env env.defaultReset reset
-        } in
-        let id = formatJson (jsonEdge newEdge) in
-        {{{ env with edges = insert id newEdge env.edges
-        } with locations = insertLocationIfUndefined env.locations from
-        } with locations = insertLocationIfUndefined env.locations to }
+        let addedEdges = join (map (lam f.
+            map (lam t.  {
+                from = f,
+                to = t,
+                guard = evalOptionPropertyModifier env env.defaultGuard guard,
+                sync = evalOptionPropertyModifier env env.defaultSync sync,
+                reset = evalOptionPropertyModifier env env.defaultReset reset
+                -- ^(optimization):
+            }) to
+        ) from) in
+
+        let newEdges = foldl (lam edges. lam newEdge.
+            insert (formatJson (jsonEdge newEdge)) newEdge edges
+        ) env.edges addedEdges in
+
+        {{ env with edges = newEdges }
+               with locations = foldl
+                   (lam locations. lam l. insertLocationIfUndefined env locations l)
+                   env.locations (concat from to) }
     | LocationDefaultCooked { invariant = invariant } ->
         { env with defaultInvariant =
             evalOptionPropertyModifier env env.defaultInvariant invariant }

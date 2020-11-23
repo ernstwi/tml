@@ -157,25 +157,32 @@ let edgeDefault: Parser StatementRaw =
 
 --------------------------------------------------------------------------------
 
+let locationSelector: Parser [String] =
+    alt (bind identifier (lam id. pure [id]))
+        (bind (symbol "[") (lam _.
+        bind (sepBy1 (symbol ",") identifier) (lam ids.
+        bind (symbol "]") (lam _.
+        pure ids)))) in
+
 let location: Parser StatementRaw =
     bind (optional (string "init")) (lam init.
-    bind identifier (lam id.
+    bind locationSelector (lam ids.
     bind (label "anything but ->" (notFollowedBy (symbol "->"))) (lam _.
     bind (many property) (lam ps.
     pure (LocationStmtRaw {
-        id = id,
+        ids = ids,
         initial = match init with Some _ then true else false,
         properties = ps
     }))))) in
 
 let edge: Parser StatementRaw =
-    bind identifier (lam a.
+    bind locationSelector (lam from.
     bind (symbol "->") (lam _.
-    bind identifier (lam b.
+    bind locationSelector (lam to.
     bind (many property) (lam ps.
     pure (EdgeStmtRaw {
-        from = a,
-        to = b,
+        from = from,
+        to = to,
         properties = ps
     }))))) in
 
@@ -242,7 +249,6 @@ map (lam t.
         else
 
         let cooked = cookProgram raw in
-        -- let _ = dprint cooked in
 
         -- Code generation
         let json = formatJson (jsonModel (evalProgram cooked)) in
@@ -272,7 +278,6 @@ map (lam t.
         else
 
         let cooked = cookProgram raw in
-        -- let _ = dprint cooked in
 
         -- Code generation
         let json = formatJson (jsonModel (evalProgram cooked)) in

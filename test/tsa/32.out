@@ -1,1 +1,1 @@
-Parse error at FILE "test/tsa/32.in" 1:1: Unexpected end of input. Expected 'default' or 
+Parse error at FILE "test/tsa/32.in" 1:1: Unexpected end of input. Expected 'default' or  or '['

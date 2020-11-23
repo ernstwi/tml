@@ -1,0 +1,3 @@
+Semantic error: [foo]: Edge property on location statement
+Semantic error: [bar, baz]: Edge property on location statement
+Semantic error: [bar, baz]: 2 guards

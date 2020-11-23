@@ -1,0 +1,133 @@
+{
+    "actions": [
+        "foo"
+    ],
+    "clocks": [
+        "x",
+        "y"
+    ],
+    "edges": [
+        {
+            "from": "b",
+            "guard": "x<5",
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "d"
+        },
+        {
+            "from": "b",
+            "guard": "x<5",
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "e"
+        },
+        {
+            "from": "c",
+            "guard": "x<5",
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "d"
+        },
+        {
+            "from": "c",
+            "guard": "x<5",
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "e"
+        },
+        {
+            "from": "f",
+            "guard": null,
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "g"
+        },
+        {
+            "from": "h",
+            "guard": null,
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "i"
+        },
+        {
+            "from": "h",
+            "guard": null,
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "j"
+        }
+    ],
+    "locations": [
+        {
+            "id": "a",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "b",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "c",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "d",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "e",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "f",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "g",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "h",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "i",
+            "initial": false,
+            "invariant": "y<10"
+        },
+        {
+            "id": "j",
+            "initial": false,
+            "invariant": "y<10"
+        }
+    ]
+}

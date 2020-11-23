@@ -12,3 +12,12 @@
 35: Sync actions
 36: Two edges between same locations
 37: (todo):(low-priority): Two identical edges
+38: Multi location selector, two inital locations
+39: Multi location selector, empty
+40: Multi location selector
+41: Multi location selector with defaults
+42: Multi location selector, semantic errors
+43: Multi location selector on edge
+44: Multi location selector on edge, with defaults
+45: Multi location selector on edge, semantic errors
+46: Multi location selector on edge, empty

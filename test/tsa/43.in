@@ -1,0 +1,8 @@
+init a
+
+[b, c] -> [d, e]
+    guard { x < 5 }
+
+[f] -> g
+
+h -> [i, j]

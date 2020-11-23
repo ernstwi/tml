@@ -3,18 +3,15 @@
     "clocks": [
         "x"
     ],
-    "edges": [
-        {
-            "from": "foo",
-            "guard": null,
-            "reset": null,
-            "sync": null,
-            "to": "bar"
-        }
-    ],
+    "edges": [],
     "locations": [
         {
             "id": "bar",
+            "initial": false,
+            "invariant": "x<5"
+        },
+        {
+            "id": "baz",
             "initial": false,
             "invariant": "x<5"
         },

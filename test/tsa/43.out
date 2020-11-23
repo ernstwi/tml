@@ -1,0 +1,109 @@
+{
+    "actions": [],
+    "clocks": [
+        "x"
+    ],
+    "edges": [
+        {
+            "from": "b",
+            "guard": "x<5",
+            "reset": null,
+            "sync": null,
+            "to": "d"
+        },
+        {
+            "from": "b",
+            "guard": "x<5",
+            "reset": null,
+            "sync": null,
+            "to": "e"
+        },
+        {
+            "from": "c",
+            "guard": "x<5",
+            "reset": null,
+            "sync": null,
+            "to": "d"
+        },
+        {
+            "from": "c",
+            "guard": "x<5",
+            "reset": null,
+            "sync": null,
+            "to": "e"
+        },
+        {
+            "from": "f",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "g"
+        },
+        {
+            "from": "h",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "i"
+        },
+        {
+            "from": "h",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "j"
+        }
+    ],
+    "locations": [
+        {
+            "id": "a",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "b",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "c",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "d",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "e",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "f",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "g",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "h",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "i",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "j",
+            "initial": false,
+            "invariant": null
+        }
+    ]
+}

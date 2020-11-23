@@ -1,0 +1,4 @@
+init a
+
+[b, c] -> []
+    invar { x < 5 }

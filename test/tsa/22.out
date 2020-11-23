@@ -23,7 +23,7 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": null
+            "invariant": "x<5"
         },
         {
             "id": "foo",

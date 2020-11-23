@@ -1,0 +1,11 @@
+init a
+
+default location invar { x < 5 }
+
+[b, c]
+    invar { y < 10 }
+
+[d, e]
+    invar!
+
+[f, g]

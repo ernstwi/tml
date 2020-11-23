@@ -1,0 +1,11 @@
+init a
+
+default edge sync { foo }
+default location invar { y < 10 }
+
+[b, c] -> [d, e]
+    guard { x < 5 }
+
+[f] -> g
+
+h -> [i, j]
