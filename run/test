@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+run/build $1
+shift
+mi build/main.mc -- $@

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+for f in src/*.mc; do
+    sed s/SOURCE_LANG/$1/ < $f > build/$(basename $f)
+done

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+run/build TSA
+mi build/main.mc -- $@ test/tsa/*.in
+run/build TsaSyncAction
+mi build/main.mc -- $@ test/tsa-sync/*.in

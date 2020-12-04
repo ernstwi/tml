@@ -1,7 +1,10 @@
 include "either.mc"
 include "hashmap.mc"
+include "internal-action.mc"
 include "json.mc"
 include "string.mc"
+include "sync-action.mc"
+include "token.mc"
 
 -- Base language fragment, to be used in combination with other fragments. Not
 -- valid as a stand-alone language.
@@ -521,7 +524,180 @@ lang Base
             ("clocks", JsonArray (map (lam c. JsonString c) clocks)),
             jsonActions actions
         ]
+
+    -- action: Parser Action
+    sem action =
 end
+
+-- Language compositions -------------------------------------------------------
+
+-- TSA contains every "shallow" feature of TML (= features that can be compiled
+-- to the base TSA model).
+lang TSA = Base + InternalAction
+
+-- TSA with input/output actions.
+lang TsaSyncAction = Base + SyncAction
+
+-- Parsers ---------------------------------------------------------------------
+
+-- Parse one or more occurrences of `p` separated by single occurrences of `sep`.
+let sepBy1: Parser s -> Parser a -> Parser [a] =
+    lam sep. lam p.
+    bind p (lam hd.
+    bind (many (apr sep p)) (lam tl.
+    pure (cons hd tl)))
+
+--------------------------------------------------------------------------------
+
+let lt:   Parser Cmp = use Base in bind (symbol "<")  (lam _. pure (Lt ()))
+let ltEq: Parser Cmp = use Base in bind (symbol "<=") (lam _. pure (LtEq ()))
+let eq:   Parser Cmp = use Base in bind (symbol "==") (lam _. pure (Eq ()))
+let gtEq: Parser Cmp = use Base in bind (symbol ">=") (lam _. pure (GtEq ()))
+let gt:   Parser Cmp = use Base in bind (symbol ">")  (lam _. pure (Gt ()))
+
+--------------------------------------------------------------------------------
+
+let cmp: Parser Cmp = use Base in
+    alt eq (alt ltEq (alt lt (alt gtEq gt)))
+
+let cmpInvar: Parser Cmp = use Base in
+    alt ltEq lt
+
+--------------------------------------------------------------------------------
+
+let oneClockGuard: Parser GuardConjunct = use Base in
+    bind identifier (lam a.
+    bind cmp (lam c.
+    bind number (lam n.
+    pure (OneClockGuard (a, c, n)))))
+
+let twoClockGuard: Parser GuardConjunct = use Base in
+    bind identifier (lam a.
+    bind (symbol "-") (lam _.
+    bind identifier (lam b.
+    bind cmp (lam c.
+    bind number (lam n.
+    pure (TwoClockGuard (a, b, c, n)))))))
+
+--------------------------------------------------------------------------------
+
+let invariantConjunct: Parser InvariantConjunct = use Base in
+    bind identifier (lam id.
+    bind cmpInvar (lam c.
+    bind number (lam n.
+    pure (id, c, n))))
+
+let guardConjunct: Parser GuardConjunct = use Base in
+    alt (try oneClockGuard) twoClockGuard
+
+--------------------------------------------------------------------------------
+
+let invariant: Parser PropertyModifier = use Base in
+    bind (string "invar") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearInvariant ()))))
+    (bind (symbol "{") (lam _.
+    bind (sepBy1 (symbol "&") invariantConjunct) (lam cs.
+    bind (symbol "}") (lam _.
+    pure (Right (Invariant cs)))))))
+
+
+let guard: Parser PropertyModifier = use Base in
+    bind (string "guard") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearGuard ()))))
+    (bind (symbol "{") (lam _.
+    bind (sepBy1 (symbol "&") guardConjunct) (lam cs.
+    bind (symbol "}") (lam _.
+    pure (Right (Guard cs)))))))
+
+let sync: Parser PropertyModifier = use SOURCE_LANG in
+    bind (string "sync") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearSync ()))))
+    (bind (symbol "{") (lam _.
+    bind (action ()) (lam a.
+    bind (symbol "}") (lam _.
+    pure (Right (Sync a)))))))
+
+let reset: Parser PropertyModifier = use Base in
+    bind (string "reset") (lam _.
+    alt
+    (bind (symbol "!") (lam _. pure (Left (ClearReset ()))))
+    (bind (symbol "{") (lam _.
+    bind (sepBy1 (symbol ",") identifier) (lam cs.
+    bind (symbol "}") (lam _.
+    pure (Right (Reset cs)))))))
+
+--------------------------------------------------------------------------------
+
+let property: Parser PropertyModifier = use Base in
+    alt invariant (alt guard (alt sync reset))
+
+--------------------------------------------------------------------------------
+
+let locationDefault: Parser StatementRaw = use Base in
+    bind (string "location") (lam _.
+    bind (many property) (lam ps.
+    pure (LocationDefaultRaw ps)))
+
+let edgeDefault: Parser StatementRaw = use Base in
+    bind (string "edge") (lam _.
+    bind (many property) (lam ps.
+    pure (EdgeDefaultRaw ps)))
+
+--------------------------------------------------------------------------------
+
+let locationSelector: Parser [String] = use Base in
+    alt (bind identifier (lam id. pure [id]))
+        (bind (symbol "[") (lam _.
+        bind (sepBy1 (symbol ",") identifier) (lam ids.
+        bind (symbol "]") (lam _.
+        pure ids))))
+
+let location: Parser StatementRaw = use Base in
+    bind (optional (string "init")) (lam init.
+    bind locationSelector (lam ids.
+    bind (label "anything but ->" (notFollowedBy (symbol "->"))) (lam _.
+    bind (many property) (lam ps.
+    pure (LocationStmtRaw {
+        ids = ids,
+        initial = match init with Some _ then true else false,
+        properties = ps
+    })))))
+
+let edge: Parser StatementRaw = use Base in
+    bind locationSelector (lam c.
+    bind (many1 (apr (symbol "->") locationSelector)) (lam cs.
+    bind (many property) (lam ps.
+    pure (EdgeStmtRaw {
+        connections = cons c cs,
+        properties = ps
+    }))))
+
+let default: Parser StatementRaw = use Base in
+    bind (string "default") (lam _.
+    alt locationDefault edgeDefault)
+
+--------------------------------------------------------------------------------
+
+let locationOrEdge: Parser StatementRaw = use Base in
+    lam st.
+    let res = location st in
+    match res with Failure (_, "anything but ->", _) then
+        edge st
+    else res
+
+--------------------------------------------------------------------------------
+
+let statement: Parser StatementRaw = use Base in alt default locationOrEdge
+
+--------------------------------------------------------------------------------
+
+let program: Parser ProgramRaw = use Base in
+    bind (many1 statement) (lam ss.
+    bind (alt (apl (string "\n") endOfInput) endOfInput) (lam _.
+    pure ss))
 
 -- Unit tests ------------------------------------------------------------------
 

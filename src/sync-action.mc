@@ -1,4 +1,5 @@
 include "json.mc"
+include "token.mc"
 
 lang SyncAction
     syn Action =
@@ -18,4 +19,10 @@ lang SyncAction
     sem getIdAction =
     | InputAction id -> id
     | OutputAction id -> id
+
+    -- action: Parser Action
+    sem action = | _ ->
+    bind identifier (lam id.
+    alt (apr (symbol "?") (pure (InputAction id)))
+        (apr (symbol "!") (pure (OutputAction id))))
 end
