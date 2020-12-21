@@ -319,9 +319,6 @@ lang Base
 
 -- Evaluation ------------------------------------------------------------------
 
-    -- getIdAction: Action -> String
-    sem getIdAction =
-
     -- evalPropertyModifier: EvalEnv -> PropertyModifier -> Option Property
     sem evalPropertyModifier (env: EvalEnv) =
     | Left _ -> None ()
@@ -453,9 +450,6 @@ lang Base
 
 -- Code generation -------------------------------------------------------------
 
-    -- jsonAction: Action -> JsonValue
-    sem jsonAction =
-
     sem jsonCmp =
     | Lt ()   -> "<"
     | LtEq () -> "<="
@@ -496,11 +490,6 @@ lang Base
             )
         ]
 
-    -- jsonEdge: Edge -> JsonValue
-    sem jsonEdge =
-
-    sem jsonActions =
-
     -- jsonModel: Model -> JsonValue
     --
     -- JSON representation of a Model.
@@ -513,8 +502,7 @@ lang Base
             jsonActions actions
         ]
 
-    -- action: Parser Action
-    sem action =
+-- Inter-fragment definitions --------------------------------------------------
 
     -- locationSelector: Parser [String]
     sem locationSelector = | _ ->
@@ -524,9 +512,13 @@ lang Base
             bind (symbol "]") (lam _.
             pure ids))))
 
-    sem connections =
-
+    sem action =
     sem actionKeyword =
+    sem connections =
+    sem getIdAction =
+    sem jsonAction =
+    sem jsonActions =
+    sem jsonEdge =
 end
 
 -- Language compositions -------------------------------------------------------

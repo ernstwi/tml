@@ -2,8 +2,6 @@ include "json.mc"
 include "token.mc"
 
 lang EdgeCtrl
-    sem jsonProperty =
-
     -- jsonEdge: Edge -> JsonValue
     sem jsonEdge =
     | {
@@ -32,18 +30,19 @@ lang EdgeCtrl
             ("controllable", JsonBool controllable)
         ]
 
-    sem locationSelector =
-
+    -- connectionNode: () -> Parser ([String], Boolean)
     sem connectionNode = | _ ->
     bind (alt (symbol ">>") (symbol "->")) (lam arrow.
     bind (locationSelector ()) (lam l.
     pure (l, match arrow with "->" then true else false)))
 
-    -- connections: Parser [([String], Boolean)]
+    -- connections: () -> Parser [([String], Boolean)]
     sem connections = | _ ->
     bind (locationSelector ()) (lam c.
     bind (many1 (connectionNode ())) (lam cs.
     pure (cons (c, false) cs)))
 
     sem actionKeyword =
+    sem jsonProperty =
+    sem locationSelector =
 end

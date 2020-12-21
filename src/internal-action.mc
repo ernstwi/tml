@@ -13,13 +13,15 @@ lang InternalAction
     sem jsonActions =
     | actions -> ("actions", JsonArray (map (lam a. JsonString a) actions))
 
+    -- getIdAction: Action -> String
     sem getIdAction =
     | InternalAction id -> id
 
-    -- action: Parser Action
+    -- action: () -> Parser Action
     sem action = | _ ->
     bind identifier (lam id.
     pure (InternalAction id))
 
+    -- actionKeyword: () -> String
     sem actionKeyword = | _ -> "action"
 end

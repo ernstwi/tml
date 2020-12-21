@@ -6,6 +6,7 @@ lang SyncAction
     | InputAction String
     | OutputAction String
 
+    -- jsonAction: Action -> JsonValue
     sem jsonAction =
     | InputAction id ->
         JsonObject [ ("type", JsonString "input"), ("id", JsonString id) ]
@@ -16,15 +17,17 @@ lang SyncAction
     sem jsonActions =
     | channels -> ("channels", JsonArray (map (lam c. JsonString c) channels))
 
+    -- getIdAction: Action -> String
     sem getIdAction =
     | InputAction id -> id
     | OutputAction id -> id
 
-    -- action: Parser Action
+    -- action: () -> Parser Action
     sem action = | _ ->
     bind identifier (lam id.
     alt (apr (symbol "?") (pure (InputAction id)))
         (apr (symbol "!") (pure (OutputAction id))))
 
+    -- actionKeyword: () -> String
     sem actionKeyword = | _ -> "sync"
 end
