@@ -7,8 +7,7 @@ lang InternalAction
 
     -- jsonAction: Action -> JsonValue
     sem jsonAction =
-    | InternalAction id ->
-        JsonObject [ ("type", JsonString "internal"), ("id", JsonString id) ]
+    | InternalAction id -> JsonString id
 
     -- jsonActions: [String] -> JsonValue
     sem jsonActions =

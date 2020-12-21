@@ -17,10 +17,7 @@
             "reset": [
                 "four"
             ],
-            "sync": {
-                "id": "press",
-                "type": "internal"
-            },
+            "sync": "press",
             "to": "baz"
         },
         {
@@ -38,10 +35,7 @@
                 "two",
                 "three"
             ],
-            "sync": {
-                "id": "press",
-                "type": "internal"
-            },
+            "sync": "press",
             "to": "bar"
         }
     ],

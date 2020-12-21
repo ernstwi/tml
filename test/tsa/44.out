@@ -11,70 +11,49 @@
             "from": "b",
             "guard": "x<5",
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "d"
         },
         {
             "from": "b",
             "guard": "x<5",
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "e"
         },
         {
             "from": "c",
             "guard": "x<5",
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "d"
         },
         {
             "from": "c",
             "guard": "x<5",
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "e"
         },
         {
             "from": "f",
             "guard": null,
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "g"
         },
         {
             "from": "h",
             "guard": null,
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "i"
         },
         {
             "from": "h",
             "guard": null,
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "j"
         }
     ],

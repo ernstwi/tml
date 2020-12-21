@@ -15,10 +15,7 @@
                 "x",
                 "y"
             ],
-            "sync": {
-                "id": "a",
-                "type": "internal"
-            },
+            "sync": "a",
             "to": "bar"
         },
         {
@@ -28,10 +25,7 @@
                 "x",
                 "y"
             ],
-            "sync": {
-                "id": "b",
-                "type": "internal"
-            },
+            "sync": "b",
             "to": "bar"
         }
     ],

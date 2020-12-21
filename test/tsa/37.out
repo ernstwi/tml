@@ -14,10 +14,7 @@
                 "x",
                 "y"
             ],
-            "sync": {
-                "id": "a",
-                "type": "internal"
-            },
+            "sync": "a",
             "to": "bar"
         }
     ],

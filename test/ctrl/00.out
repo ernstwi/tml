@@ -17,10 +17,7 @@
             "from": "b",
             "guard": null,
             "reset": null,
-            "sync": {
-                "id": "foo",
-                "type": "internal"
-            },
+            "sync": "foo",
             "to": "c"
         }
     ],
