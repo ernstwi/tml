@@ -4,7 +4,7 @@ Requirements:
 - [Miking](https://github.com/miking-lang/miking/tree/develop) built with Python integration
 
 Usage:
-- `run/test (TSA|TsaSyncAction) [--quiet | --write] <tests>`
+- `run/test (TSA|SYNC|CTRL) [--quiet | --write] <tests>`
 - `run/test-all [--quiet | --write]`
 
 Options:

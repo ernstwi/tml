@@ -1,0 +1,44 @@
+{
+    "actions": [
+        "foo"
+    ],
+    "clocks": [],
+    "edges": [
+        {
+            "controllable": false,
+            "from": "a",
+            "guard": null,
+            "reset": null,
+            "sync": null,
+            "to": "b"
+        },
+        {
+            "controllable": true,
+            "from": "b",
+            "guard": null,
+            "reset": null,
+            "sync": {
+                "id": "foo",
+                "type": "internal"
+            },
+            "to": "c"
+        }
+    ],
+    "locations": [
+        {
+            "id": "a",
+            "initial": true,
+            "invariant": null
+        },
+        {
+            "id": "b",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "c",
+            "initial": false,
+            "invariant": null
+        }
+    ]
+}

@@ -1,3 +1,5 @@
+include "edge-ctrl.mc"
+include "edge.mc"
 include "either.mc"
 include "hashmap.mc"
 include "internal-action.mc"
@@ -53,6 +55,13 @@ let seqPairs: [a] -> [(a, a)] = lam seq.
         concat [(head seq, head (tail seq))] (seqPairsHelper (tail seq)) in
     seqPairsHelper seq
 
+-- Parse one or more occurrences of `p` separated by single occurrences of `sep`.
+let sepBy1: Parser s -> Parser a -> Parser [a] =
+    lam sep. lam p.
+    bind p (lam hd.
+    bind (many (apr sep p)) (lam tl.
+    pure (cons hd tl)))
+
 -- Types and syntactic forms ---------------------------------------------------
 
 type Model = {
@@ -73,7 +82,8 @@ type Edge = {
     to: String,
     guard: Option Property,
     sync: Option Property,
-    reset: Option Property
+    reset: Option Property,
+    controllable: Boolean
 }
 
 type ProgramRaw = [StatementRaw]
@@ -97,8 +107,9 @@ lang Base
         initial: Boolean,
         properties: [PropertyModifier] }
     | EdgeStmtRaw {
-        connections: [[String]],
-        properties: [PropertyModifier] }
+        connections: [([String], Boolean)],
+        properties: [PropertyModifier]
+    }
     | LocationDefaultRaw [PropertyModifier]
     | EdgeDefaultRaw [PropertyModifier]
 
@@ -109,8 +120,7 @@ lang Base
         invariant: Option PropertyModifier
     }
     | EdgeStmtCooked {
-        from: [String],
-        to: [String],
+        connections: [([String], Boolean)],
         guard: Option PropertyModifier,
         sync: Option PropertyModifier,
         reset: Option PropertyModifier
@@ -205,8 +215,8 @@ lang Base
         (concat (repeatedProperties (seq2string ids) properties)
         (join (map checkPropertyModifier properties)))
     | EdgeStmtRaw { connections = connections, properties = properties } ->
-        concat (locationProperties (edgeId connections) properties)
-        (concat (repeatedProperties (edgeId connections) properties)
+        concat (locationProperties (edgeId (map (lam x. x.0) connections)) properties)
+        (concat (repeatedProperties (edgeId (map (lam x. x.0) connections)) properties)
         (join (map checkPropertyModifier properties)))
     | LocationDefaultRaw properties ->
         concat (edgeProperties "[default location]" properties)
@@ -355,10 +365,11 @@ lang Base
                     to = t,
                     guard = evalOptionPropertyModifier env env.defaultGuard guard,
                     sync = evalOptionPropertyModifier env env.defaultSync sync,
-                    reset = evalOptionPropertyModifier env env.defaultReset reset
+                    reset = evalOptionPropertyModifier env env.defaultReset reset,
                     -- ^(optimization):
-                }) to
-            ) from) else never) (seqPairs connections)) in
+                    controllable = to.1
+                }) to.0
+            ) from.0) else never) (seqPairs connections)) in
 
         let newEdges = foldl (lam edges. lam newEdge.
             insert (formatJson (jsonEdge newEdge)) newEdge edges
@@ -367,7 +378,7 @@ lang Base
         {{ env with edges = newEdges }
                with locations = foldl
                    (lam locations. lam l. insertLocationIfUndefined env locations l)
-                   env.locations (join connections) }
+                   env.locations (join (map (lam x. x.0) connections)) }
     | LocationDefaultCooked { invariant = invariant } ->
         { env with defaultInvariant =
             evalOptionPropertyModifier env env.defaultInvariant invariant }
@@ -487,29 +498,6 @@ lang Base
 
     -- jsonEdge: Edge -> JsonValue
     sem jsonEdge =
-    | {
-        from = from,
-        to = to,
-        guard = guard,
-        sync = sync,
-        reset = reset
-    } ->
-        JsonObject [
-            ("from", JsonString from),
-            ("to", JsonString to),
-            ("guard",
-                match guard with Some g then
-                    jsonProperty g
-                else JsonNull ()),
-            ("sync",
-                match sync with Some s then
-                    jsonProperty s
-                else JsonNull ()),
-            ("reset",
-                match reset with Some r then
-                    jsonProperty r
-                else JsonNull ())
-        ]
 
     sem jsonActions =
 
@@ -527,27 +515,33 @@ lang Base
 
     -- action: Parser Action
     sem action =
+
+    -- locationSelector: Parser [String]
+    sem locationSelector = | _ ->
+        alt (bind identifier (lam id. pure [id]))
+            (bind (symbol "[") (lam _.
+            bind (sepBy1 (symbol ",") identifier) (lam ids.
+            bind (symbol "]") (lam _.
+            pure ids))))
+
+    sem connections =
 end
 
 -- Language compositions -------------------------------------------------------
 
 -- TSA contains every "shallow" feature of TML (= features that can be compiled
 -- to the base TSA model).
-lang TSA = Base + InternalAction
+lang TSA = Base + InternalAction + Edge
 
 -- TSA with input/output actions.
-lang TsaSyncAction = Base + SyncAction
+lang SYNC = Base + SyncAction + Edge
+
+-- TSA with uncontrollable edges.
+lang CTRL = Base + InternalAction + EdgeCtrl
+
+lang CTRL_SYNC = Base + SyncAction + EdgeCtrl
 
 -- Parsers ---------------------------------------------------------------------
-
--- Parse one or more occurrences of `p` separated by single occurrences of `sep`.
-let sepBy1: Parser s -> Parser a -> Parser [a] =
-    lam sep. lam p.
-    bind p (lam hd.
-    bind (many (apr sep p)) (lam tl.
-    pure (cons hd tl)))
-
---------------------------------------------------------------------------------
 
 let lt:   Parser Cmp = use Base in bind (symbol "<")  (lam _. pure (Lt ()))
 let ltEq: Parser Cmp = use Base in bind (symbol "<=") (lam _. pure (LtEq ()))
@@ -648,17 +642,11 @@ let edgeDefault: Parser StatementRaw = use Base in
 
 --------------------------------------------------------------------------------
 
-let locationSelector: Parser [String] = use Base in
-    alt (bind identifier (lam id. pure [id]))
-        (bind (symbol "[") (lam _.
-        bind (sepBy1 (symbol ",") identifier) (lam ids.
-        bind (symbol "]") (lam _.
-        pure ids))))
-
 let location: Parser StatementRaw = use Base in
     bind (optional (string "init")) (lam init.
-    bind locationSelector (lam ids.
-    bind (label "anything but ->" (notFollowedBy (symbol "->"))) (lam _.
+    bind (locationSelector ()) (lam ids.
+    bind (label "anything but -> or >>" (notFollowedBy (alt (symbol "->")
+        (symbol ">>")))) (lam _.
     bind (many property) (lam ps.
     pure (LocationStmtRaw {
         ids = ids,
@@ -666,14 +654,13 @@ let location: Parser StatementRaw = use Base in
         properties = ps
     })))))
 
-let edge: Parser StatementRaw = use Base in
-    bind locationSelector (lam c.
-    bind (many1 (apr (symbol "->") locationSelector)) (lam cs.
+let edge: Parser StatementRaw = use SOURCE_LANG in
+    bind (connections ()) (lam cs.
     bind (many property) (lam ps.
     pure (EdgeStmtRaw {
-        connections = cons c cs,
+        connections = cs,
         properties = ps
-    }))))
+    })))
 
 let default: Parser StatementRaw = use Base in
     bind (string "default") (lam _.
@@ -684,7 +671,7 @@ let default: Parser StatementRaw = use Base in
 let locationOrEdge: Parser StatementRaw = use Base in
     lam st.
     let res = location st in
-    match res with Failure (_, "anything but ->", _) then
+    match res with Failure (_, "anything but -> or >>", _) then
         edge st
     else res
 
