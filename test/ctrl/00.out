@@ -5,19 +5,19 @@
     "clocks": [],
     "edges": [
         {
+            "action": null,
             "controllable": false,
             "from": "a",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "b"
         },
         {
+            "action": "foo",
             "controllable": true,
             "from": "b",
             "guard": null,
             "reset": null,
-            "sync": "foo",
             "to": "c"
         }
     ],

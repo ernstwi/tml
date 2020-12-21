@@ -21,7 +21,7 @@ lang EdgeCtrl
                 match guard with Some g then
                     jsonProperty g
                 else JsonNull ()),
-            ("sync",
+            (actionKeyword (),
                 match sync with Some s then
                     jsonProperty s
                 else JsonNull ()),
@@ -44,4 +44,6 @@ lang EdgeCtrl
     bind (locationSelector ()) (lam c.
     bind (many1 (connectionNode ())) (lam cs.
     pure (cons (c, false) cs)))
+
+    sem actionKeyword =
 end

@@ -20,4 +20,6 @@ lang InternalAction
     sem action = | _ ->
     bind identifier (lam id.
     pure (InternalAction id))
+
+    sem actionKeyword = | _ -> "action"
 end

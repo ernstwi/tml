@@ -4,9 +4,9 @@ init bar
 
 foo -> bar
     guard { x - y == 5 }
-    sync { press }
+    action { press }
     reset { one, two, three }
 bar -> baz
-    sync { press }
+    action { press }
     reset { four }
 baz -> baz

@@ -12,22 +12,23 @@
     ],
     "edges": [
         {
+            "action": "press",
             "from": "bar",
             "guard": null,
             "reset": [
                 "four"
             ],
-            "sync": "press",
             "to": "baz"
         },
         {
+            "action": null,
             "from": "baz",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "baz"
         },
         {
+            "action": "press",
             "from": "foo",
             "guard": "x-y==5",
             "reset": [
@@ -35,7 +36,6 @@
                 "two",
                 "three"
             ],
-            "sync": "press",
             "to": "bar"
         }
     ],

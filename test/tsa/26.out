@@ -6,21 +6,21 @@
     ],
     "edges": [
         {
+            "action": null,
             "from": "foo",
             "guard": null,
             "reset": [
                 "x"
             ],
-            "sync": null,
             "to": "bar"
         },
         {
+            "action": null,
             "from": "foo",
             "guard": null,
             "reset": [
                 "y"
             ],
-            "sync": null,
             "to": "bar"
         }
     ],

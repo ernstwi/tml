@@ -3,17 +3,17 @@
     "clocks": [],
     "edges": [
         {
+            "action": null,
             "from": "foo",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "bar"
         },
         {
+            "action": null,
             "from": "foo",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "baz"
         }
     ],

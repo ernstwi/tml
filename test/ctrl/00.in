@@ -2,4 +2,4 @@ init a
 
 a >> b
 b -> c
-    sync { foo }
+    action { foo }

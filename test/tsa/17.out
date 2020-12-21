@@ -7,12 +7,12 @@
     ],
     "edges": [
         {
+            "action": "a",
             "from": "foo",
             "guard": "x<5",
             "reset": [
                 "x"
             ],
-            "sync": "a",
             "to": "bar"
         }
     ],

@@ -1,6 +1,6 @@
 init a
 
-default edge sync { foo }
+default edge action { foo }
 default location invar { y < 10 }
 
 [b, c] -> [d, e]

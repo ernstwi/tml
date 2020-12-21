@@ -5,52 +5,52 @@
     ],
     "edges": [
         {
+            "action": null,
             "from": "b",
             "guard": "x<5",
             "reset": null,
-            "sync": null,
             "to": "d"
         },
         {
+            "action": null,
             "from": "b",
             "guard": "x<5",
             "reset": null,
-            "sync": null,
             "to": "e"
         },
         {
+            "action": null,
             "from": "c",
             "guard": "x<5",
             "reset": null,
-            "sync": null,
             "to": "d"
         },
         {
+            "action": null,
             "from": "c",
             "guard": "x<5",
             "reset": null,
-            "sync": null,
             "to": "e"
         },
         {
+            "action": null,
             "from": "f",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "g"
         },
         {
+            "action": null,
             "from": "h",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "i"
         },
         {
+            "action": null,
             "from": "h",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "j"
         }
     ],

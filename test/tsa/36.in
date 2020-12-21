@@ -3,10 +3,10 @@ bar
 
 foo -> bar
     guard { x < 5 }
-    sync { a }
+    action { a }
     reset { x, y }
 
 foo -> bar
     guard { x >= 5 }
-    sync { b }
+    action { b }
     reset { x, y }

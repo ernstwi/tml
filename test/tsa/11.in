@@ -2,9 +2,9 @@ init foo
 init bar
 foo -> bar
     guard { x - y == 5 }
-    sync { a }
-    sync { b }
+    action { a }
+    action { b }
     reset { x }
     guard { x > 5 }
     reset { y }
-    sync { c }
+    action { c }

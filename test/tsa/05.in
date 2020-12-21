@@ -3,9 +3,9 @@ init bar invar { x <= 10 }
 
 foo -> bar
     guard { x - 2 == 5 }
-    sync { press }
+    action { press }
     reset { one, two, three }
 bar -> baz
-    sync { press }
+    action { press }
     reset { four }
 baz -> baz

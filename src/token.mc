@@ -23,7 +23,7 @@ let reserved: String -> Parser () = lam s.
 let number: Parser Int = token lexNumber
 
 -- List of reserved keywords
-let keywords = ["init", "invar", "guard", "sync", "reset", "default", "location", "edge"]
+let keywords = ["init", "invar", "guard", "action", "sync", "reset", "default", "location", "edge"]
 
 -- Parse an identifier, but require that it is not in the list
 -- of reserved keywords.

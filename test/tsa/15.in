@@ -1,6 +1,6 @@
 init foo
 bar
 foo -> bar
-    sync { a }
+    action { a }
     guard { x < 5 }
     reset { x }

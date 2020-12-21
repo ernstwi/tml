@@ -4,8 +4,8 @@ init foo
 
 foo -> bar
     guard!
-    sync!
+    action!
     reset!
     guard { x == 10 }
-    sync { a }
+    action { a }
     reset { x }

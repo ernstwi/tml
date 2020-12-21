@@ -525,6 +525,8 @@ lang Base
             pure ids))))
 
     sem connections =
+
+    sem actionKeyword =
 end
 
 -- Language compositions -------------------------------------------------------
@@ -606,7 +608,7 @@ let guard: Parser PropertyModifier = use Base in
     pure (Right (Guard cs)))))))
 
 let sync: Parser PropertyModifier = use SOURCE_LANG in
-    bind (string "sync") (lam _.
+    bind (string (actionKeyword ())) (lam _.
     alt
     (bind (symbol "!") (lam _. pure (Left (ClearSync ()))))
     (bind (symbol "{") (lam _.

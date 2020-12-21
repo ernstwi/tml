@@ -2,5 +2,5 @@ init foo
 bar
 foo -> bar
     reset { x }
-    sync { a }
+    action { a }
     guard { x < 5 }

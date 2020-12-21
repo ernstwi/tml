@@ -9,23 +9,23 @@
     ],
     "edges": [
         {
+            "action": "a",
             "from": "foo",
             "guard": "x<5",
             "reset": [
                 "x",
                 "y"
             ],
-            "sync": "a",
             "to": "bar"
         },
         {
+            "action": "b",
             "from": "foo",
             "guard": "x>=5",
             "reset": [
                 "x",
                 "y"
             ],
-            "sync": "b",
             "to": "bar"
         }
     ],

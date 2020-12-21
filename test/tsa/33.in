@@ -3,7 +3,7 @@ default location
 
 default edge
     guard { x == 10 }
-    sync { a }
+    action { a }
     reset { x }
 
 init foo
@@ -11,5 +11,5 @@ init foo
 
 foo -> bar
     guard!
-    sync!
+    action!
     reset!

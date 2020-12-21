@@ -1,7 +1,7 @@
 init foo
 
 foo -> bar
-    sync { a! }
+    action { a! }
 
 bar -> baz
-    sync { b? }
+    action { b? }

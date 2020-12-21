@@ -3,9 +3,9 @@ init foo
 default edge
     guard { x == 10 }
     guard { x == 10 }
-    sync { a }
-    sync { a }
-    sync { a }
+    action { a }
+    action { a }
+    action { a }
     reset { x }
     reset { x }
     reset { x }

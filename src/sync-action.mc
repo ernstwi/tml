@@ -25,4 +25,6 @@ lang SyncAction
     bind identifier (lam id.
     alt (apr (symbol "?") (pure (InputAction id)))
         (apr (symbol "!") (pure (OutputAction id))))
+
+    sem actionKeyword = | _ -> "sync"
 end

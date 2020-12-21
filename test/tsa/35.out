@@ -1,1 +1,1 @@
-Parse error at FILE "test/tsa/35.in" 4:13: Unexpected '!'. Expected '}'
+Parse error at FILE "test/tsa/35.in" 4:15: Unexpected '!'. Expected '}'

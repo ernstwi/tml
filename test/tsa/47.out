@@ -6,71 +6,71 @@
     ],
     "edges": [
         {
+            "action": null,
             "from": "a",
             "guard": null,
             "reset": [
                 "x"
             ],
-            "sync": null,
             "to": "b"
         },
         {
+            "action": null,
             "from": "b",
             "guard": null,
             "reset": [
                 "x"
             ],
-            "sync": null,
             "to": "c"
         },
         {
+            "action": null,
             "from": "d",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "e"
         },
         {
+            "action": null,
             "from": "e",
             "guard": null,
             "reset": null,
-            "sync": null,
             "to": "f"
         },
         {
+            "action": null,
             "from": "g",
             "guard": null,
             "reset": [
                 "y"
             ],
-            "sync": null,
             "to": "i"
         },
         {
+            "action": null,
             "from": "h",
             "guard": null,
             "reset": [
                 "y"
             ],
-            "sync": null,
             "to": "i"
         },
         {
+            "action": null,
             "from": "i",
             "guard": null,
             "reset": [
                 "y"
             ],
-            "sync": null,
             "to": "j"
         },
         {
+            "action": null,
             "from": "i",
             "guard": null,
             "reset": [
                 "y"
             ],
-            "sync": null,
             "to": "k"
         }
     ],

@@ -7,13 +7,14 @@
     ],
     "edges": [
         {
+            "action": null,
             "from": "bar",
             "guard": "x>=5",
             "reset": null,
-            "sync": null,
             "to": "baz"
         },
         {
+            "action": null,
             "from": "foo",
             "guard": "x-y==5&z<7",
             "reset": [
@@ -21,7 +22,6 @@
                 "y",
                 "z"
             ],
-            "sync": null,
             "to": "bar"
         }
     ],
