@@ -66,7 +66,7 @@ Evaluation rules:
 ## TSA, SYNC
 
 ```
-edge   ::= locationSelector ("->" locationSelector)+ property*
+edge ::= locationSelector ("->" locationSelector)+ property*
 ```
 
 ## CTRL
