@@ -18,13 +18,17 @@ irs.forEach(ir => {
     if (ir.clocks.length > 0)
         console.log(`    clock ${ir.clocks.join(', ')};\n`);
     console.log(`    state`);
-    console.log(`${ir.locations.map(l => `        ${l.id}${l.invariant == null ? '' : ` { ${l.invariant} }`}`).join(',\n')};\n`);
-    console.log(`    init ${ir.locations.filter(l => l.initial == true)[0].id};\n`);
+    console.log(`${ir.locations.map(l => `        ${l.id}${
+        l.invariant == null ? '' : ` { ${l.invariant} }`}`).join(',\n')};\n`);
+    console.log(`    init ${ir.locations.filter(l => l.initial == true)[0].id};
+`);
     if (ir.edges.length > 0) {
         console.log(`    trans`);
-        console.log(`${ir.edges.map(e => `        ${e.from} -> ${e.to} {${e.guard == null ? '' : `
+        console.log(`${ir.edges.map(e => `        ${e.from} -> ${e.to} {${
+            e.guard == null ? '' : `
             guard ${e.guard};`}${e.sync == null ? '' : `
-            sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`}${e.reset == null ? '' : `
+            sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`}${
+                e.reset == null ? '' : `
             assign ${e.reset.map(c => `${c} := 0`).join(', ')};`}
         }`).join(',\n')};`);
     }
