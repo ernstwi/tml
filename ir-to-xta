@@ -15,63 +15,63 @@ print(0, `chan ${[...channels].join(', ')};`);
 newline();
 
 irs.forEach(ir => {
-    print(0, `process ${ir.name}() {`);
+  print(0, `process ${ir.name}() {`);
 
-    if (ir.clocks.length > 0) {
-        print(4, `clock ${ir.clocks.join(', ')};`);
-        newline();
-    }
-    print(4, 'state');
+  if (ir.clocks.length > 0) {
+    print(4, `clock ${ir.clocks.join(', ')};`);
+    newline();
+  }
+  print(4, 'state');
 
-    ir.locations.forEach(l => {
-        write(8, l.id + (l.invariant == null ? '' : ` { ${l.invariant} }`));
-        if (last(ir.locations, l))
-            print(0, ';')
-        else
-            print(0, ',')
+  ir.locations.forEach(l => {
+    write(8, l.id + (l.invariant == null ? '' : ` { ${l.invariant} }`));
+    if (last(ir.locations, l))
+      print(0, ';')
+    else
+      print(0, ',')
+  });
+  newline();
+
+  print(4, `init ${ir.locations.filter(l => l.initial == true)[0].id};`);
+  newline();
+
+  if (ir.edges.length > 0) {
+    print(4, 'trans');
+
+    ir.edges.forEach(e => {
+      print(8, `${e.from} -> ${e.to} {`);
+      if (e.guard != null)
+        print(12, `guard ${e.guard};`);
+      if (e.sync != null)
+        print(12, `sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`);
+      if (e.reset != null)
+        print(12, `assign ${e.reset.map(c => `${c} := 0`).join(', ')};`);
+      if (last(ir.edges, e))
+        print(8, '};');
+      else
+        print(8, '},');
     });
-    newline();
-
-    print(4, `init ${ir.locations.filter(l => l.initial == true)[0].id};`);
-    newline();
-
-    if (ir.edges.length > 0) {
-        print(4, 'trans');
-
-        ir.edges.forEach(e => {
-            print(8, `${e.from} -> ${e.to} {`);
-            if (e.guard != null)
-                print(12, `guard ${e.guard};`);
-            if (e.sync != null)
-                print(12, `sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`);
-            if (e.reset != null)
-                print(12, `assign ${e.reset.map(c => `${c} := 0`).join(', ')};`);
-            if (last(ir.edges, e))
-                print(8, '};');
-            else
-                print(8, '},');
-        });
-    }
-    print(0, '}');
-    newline();
+  }
+  print(0, '}');
+  newline();
 });
 
 print(0, `system ${irs.map(ir => ir.name).join(', ')};`);
 
 function print(indent, string) {
-    console.log(' '.repeat(indent) + string);
+  console.log(' '.repeat(indent) + string);
 }
 
 function write(indent, string) {
-    process.stdout.write(' '.repeat(indent) + string);
+  process.stdout.write(' '.repeat(indent) + string);
 }
 
 function last(array, element) {
-    if (array.indexOf(element) == array.length - 1)
-        return true;
-    return false;
+  if (array.indexOf(element) == array.length - 1)
+    return true;
+  return false;
 }
 
 function newline() {
-    process.stdout.write('\n');
+  process.stdout.write('\n');
 }
