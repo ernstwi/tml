@@ -11,28 +11,67 @@ let channels = new Set();
 irs.forEach(ir => ir.channels.forEach(c => channels.add(c)));
 files.forEach((f, i) => irs[i].name = f.replace(/\.[^\.]*$/, ''));
 
-console.log(`chan ${[...channels].join(', ')};\n`);
+print(0, `chan ${[...channels].join(', ')};`);
+newline();
 
 irs.forEach(ir => {
-    console.log(`process ${ir.name}() {`);
-    if (ir.clocks.length > 0)
-        console.log(`    clock ${ir.clocks.join(', ')};\n`);
-    console.log(`    state`);
-    console.log(`${ir.locations.map(l => `        ${l.id}${
-        l.invariant == null ? '' : ` { ${l.invariant} }`}`).join(',\n')};\n`);
-    console.log(`    init ${ir.locations.filter(l => l.initial == true)[0].id};
-`);
-    if (ir.edges.length > 0) {
-        console.log(`    trans`);
-        console.log(`${ir.edges.map(e => `        ${e.from} -> ${e.to} {${
-            e.guard == null ? '' : `
-            guard ${e.guard};`}${e.sync == null ? '' : `
-            sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`}${
-                e.reset == null ? '' : `
-            assign ${e.reset.map(c => `${c} := 0`).join(', ')};`}
-        }`).join(',\n')};`);
+    print(0, `process ${ir.name}() {`);
+
+    if (ir.clocks.length > 0) {
+        print(4, `clock ${ir.clocks.join(', ')};`);
+        newline();
     }
-    console.log('}\n');
+    print(4, 'state');
+
+    ir.locations.forEach(l => {
+        write(8, l.id + (l.invariant == null ? '' : ` { ${l.invariant} }`));
+        if (last(ir.locations, l))
+            print(0, ';')
+        else
+            print(0, ',')
+    });
+    newline();
+
+    print(4, `init ${ir.locations.filter(l => l.initial == true)[0].id};`);
+    newline();
+
+    if (ir.edges.length > 0) {
+        print(4, 'trans');
+
+        ir.edges.forEach(e => {
+            print(8, `${e.from} -> ${e.to} {`);
+            if (e.guard != null)
+                print(12, `guard ${e.guard};`);
+            if (e.sync != null)
+                print(12, `sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`);
+            if (e.reset != null)
+                print(12, `assign ${e.reset.map(c => `${c} := 0`).join(', ')};`);
+            if (last(ir.edges, e))
+                print(8, '};');
+            else
+                print(8, '},');
+        });
+    }
+    print(0, '}');
+    newline();
 });
 
-console.log(`system ${irs.map(ir => ir.name).join(', ')};`);
+print(0, `system ${irs.map(ir => ir.name).join(', ')};`);
+
+function print(indent, string) {
+    console.log(' '.repeat(indent) + string);
+}
+
+function write(indent, string) {
+    process.stdout.write(' '.repeat(indent) + string);
+}
+
+function last(array, element) {
+    if (array.indexOf(element) == array.length - 1)
+        return true;
+    return false;
+}
+
+function newline() {
+    process.stdout.write('\n');
+}
