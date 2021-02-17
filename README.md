@@ -22,15 +22,16 @@ Program          ::= statement*
 
 statement        ::= location | edge | default
 
-location         ::= "init"? locationSelector property*
+location         ::= "init"? locationSelector locationProperty*
 default          ::= locationDefault | edgeDefault
 
 locationSelector ::= id | "[" id ("," id)* "]"
 
-locationDefault  ::= "default" "location" property*
-edgeDefault      ::= "default" "edge" property*
+locationDefault  ::= "default" "location" locationProperty*
+edgeDefault      ::= "default" "edge" edgeProperty*
 
-property         ::= invar | guard | action | reset
+locationProperty ::= invar
+edgeProperty     ::= guard | action | reset
 
 invar            ::= "invar" ("!" | "{" invarExpr "}")
 guard            ::= "guard" ("!" | "{" guardExpr "}")
@@ -52,10 +53,8 @@ nat              ::= [1-9] digit*
 ```
 
 Validity constraints:
-- Exactly one initial location.
-- Properties on a location (or location default) must be invar.
-- Properties on an edge (or edge default) must be guard, action, or reset.
-- A statement has at most one of each type of property.
+- There must be exactly one initial location.
+- Each statement must have at most one of each type of property.
 
 Evaluation rules:
 - Default statements define properties which apply to all following location/edge statements.
@@ -66,13 +65,13 @@ Evaluation rules:
 ## TSA, SYNC
 
 ```
-edge ::= locationSelector ("->" locationSelector)+ property*
+edge ::= locationSelector ("->" locationSelector)+ edgeProperty*
 ```
 
 ## CTRL
 
 ```
-edge ::= locationSelector (("->" | ">>") locationSelector)+ property*
+edge ::= locationSelector (("->" | ">>") locationSelector)+ edgeProperty*
 ```
 
 ## TSA, CTRL
