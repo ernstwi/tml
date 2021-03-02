@@ -1,1 +1,1 @@
-Parse error at FILE "test/tsa/05.in" 5:17: Unexpected '2'. Expected valid identifier
+Parse error at FILE "tests/tsa/05.in" 5:17: Unexpected '2'. Expected valid identifier

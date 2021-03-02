@@ -1,1 +1,1 @@
-Parse error at FILE "test/tsa/30.in" 3:13: Unexpected '}'. Expected valid identifier
+Parse error at FILE "tests/tsa/30.in" 3:13: Unexpected '}'. Expected valid identifier

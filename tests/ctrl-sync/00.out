@@ -1,1 +1,1 @@
-Parse error at FILE "test/ctrl-sync/00.in" 5:16: Unexpected '}'. Expected '?' or '!'
+Parse error at FILE "tests/ctrl-sync/00.in" 5:16: Unexpected '}'. Expected '?' or '!'

@@ -1,1 +1,1 @@
-Parse error at FILE "test/tsa/39.in" 3:2: Unexpected ']'. Expected valid identifier
+Parse error at FILE "tests/tsa/39.in" 3:2: Unexpected ']'. Expected valid identifier
