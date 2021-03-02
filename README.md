@@ -4,12 +4,9 @@ Requirements:
 - [Miking](https://github.com/miking-lang/miking/tree/develop) built with Python integration
 
 Usage:
-- `run/test (TSA|SYNC|CTRL|CTRL_SYNC) [--quiet | --write] <tests>`
-- `run/test-all [--quiet | --write]`
-
-Options:
-- `--quiet`: Suppress test output
-- `--write`: Write test output to reference file
+- Build: `./build (TSA|SYNC|CTRL|CTRL_SYNC)`
+- Run: `mi built/main.mc -- <input-file>`
+- Test: `./test [--write]`
 
 # Language definition
 
