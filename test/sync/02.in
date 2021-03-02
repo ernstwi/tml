@@ -1,0 +1,9 @@
+init foo
+init bar
+
+foo -> bar
+    sync { a! }
+    invar { x < 5 }
+
+bar -> baz
+    sync { b? }
