@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# This program builds the compiler for a specific TML variant.
+# Usage: ./build (TSA|SYNC|CTRL|CTRL_SYNC)
+
+for f in src/*.mc; do
+    sed s/SOURCE_LANG/$1/ < $f > built/$(basename $f)
+done

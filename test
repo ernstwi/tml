@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+
+// This program compiles every file in tests/*/*.in and compares it with the
+// corresponding tests/*/*.out
+// Usage: ./test [--write]
+
+let cp = require('child_process');
+let fs = require('fs');
+let path = require('path');
+
+function test(lang, dir, write) {
+    cp.execSync(`./build ${lang}`);
+    fs.readdirSync(dir)
+        .filter(f => path.extname(f) == '.in')
+        .forEach(f => {
+            process.stdout.write(`${dir}/${f}... `);
+            let out = cp.execSync(`mi built/main.mc -- ${dir}/${f}`).toString();
+            let refname = `${dir}/${f.replace(/.in$/, '.out')}`;
+            if (!fs.existsSync(refname)) {
+                process.stdout.write('\x1b[34mNo reference\x1b[0m\n');
+            } else {
+                let reference = fs.readFileSync(`${dir}/${f.replace(/.in$/, '.out')}`).toString();
+                if (out != reference)
+                    process.stdout.write('\x1b[31mFail\x1b[0m\n');
+                else
+                    process.stdout.write('\x1b[32mPass\x1b[0m\n');
+            }
+            if (write)
+                fs.writeFileSync(refname, out);
+        });
+}
+
+let write = process.argv.length == 3 && process.argv[2] == '--write';
+
+test('TSA', 'tests/tsa', write);
+test('SYNC', 'tests/sync', write);
+test('CTRL', 'tests/ctrl', write);
+test('CTRL_SYNC', 'tests/ctrl-sync', write);
