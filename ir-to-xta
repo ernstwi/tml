@@ -3,6 +3,7 @@
 // This program reads TML-SYNC IR and outputs Uppaal XTA.
 // Usage: ./ir-to-xta <IR-1> <IR-2> ... <IR-n>
 
+let assert = require('assert');
 let fs = require('fs');
 
 let files = process.argv.splice(2);
@@ -26,7 +27,7 @@ irs.forEach(ir => {
   print(4, 'state');
 
   ir.locations.forEach(l => {
-    write(8, l.id + (l.invariant == null ? '' : ` { ${l.invariant} }`));
+    write(8, l.id + (l.invariant == null ? '' : ` { ${invar(l.invariant)} }`));
     if (last(ir.locations, l))
       print(0, ';')
     else
@@ -43,7 +44,7 @@ irs.forEach(ir => {
     ir.edges.forEach(e => {
       print(8, `${e.from} -> ${e.to} {`);
       if (e.guard != null)
-        print(12, `guard ${e.guard};`);
+        print(12, `guard ${guard(e.guard)};`);
       if (e.sync != null)
         print(12, `sync ${e.sync.id}${e.sync.type == 'input' ? '?' : '!'};`);
       if (e.reset != null)
@@ -59,6 +60,39 @@ irs.forEach(ir => {
 });
 
 print(0, `system ${irs.map(ir => ir.name).join(', ')};`);
+
+function guard(gs) {
+    return gs.map(g => {
+        if (g.clocks_n == 1) {
+            return `${g.clock} ${cmp(g.cmp)} ${g.n}`;
+        } else {
+            assert(g.clocks_n == 2);
+            return `${g.clock_1} - ${g.clock_2} ${cmp(g.cmp)} ${g.n}`;
+        }
+    }).join(' && ');
+}
+
+function invar(is) {
+    return is.map(i => `${i.clock} ${cmp(i.cmp)} ${i.n}`).join(' && ');
+}
+
+function cmp(c) {
+    switch (c) {
+        case "lt":
+            return "<";
+        case "le":
+            return "<=";
+        case "eq":
+            return "==";
+        case "ge":
+            return ">=";
+        case "gt":
+            return ">";
+        default:
+            process.stderr.write(`Error: Unrecognized comparison operator ${c}`);
+            process.exit(1);
+    }
+}
 
 function print(indent, string) {
   console.log(' '.repeat(indent) + string);
