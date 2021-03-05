@@ -9,9 +9,16 @@
     ],
     "edges": [
         {
-            "action": "a",
+            "action": "b",
             "from": "foo",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "ge",
+                    "n": 5
+                }
+            ],
             "reset": [
                 "x",
                 "y"
@@ -19,9 +26,16 @@
             "to": "bar"
         },
         {
-            "action": "b",
+            "action": "a",
             "from": "foo",
-            "guard": "x>=5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": [
                 "x",
                 "y"

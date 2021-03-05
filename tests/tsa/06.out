@@ -9,14 +9,42 @@
         {
             "action": null,
             "from": "bar",
-            "guard": "x>=5&z-y<7",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "ge",
+                    "n": 5
+                },
+                {
+                    "clock_1": "z",
+                    "clock_2": "y",
+                    "clocks_n": 2,
+                    "cmp": "lt",
+                    "n": 7
+                }
+            ],
             "reset": null,
             "to": "baz"
         },
         {
             "action": null,
             "from": "foo",
-            "guard": "x-y==5&z<7",
+            "guard": [
+                {
+                    "clock_1": "x",
+                    "clock_2": "y",
+                    "clocks_n": 2,
+                    "cmp": "eq",
+                    "n": 5
+                },
+                {
+                    "clock": "z",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 7
+                }
+            ],
             "reset": null,
             "to": "bar"
         }
@@ -25,7 +53,13 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<10"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "baz",

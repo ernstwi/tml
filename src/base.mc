@@ -451,29 +451,45 @@ lang Base
 -- Code generation -------------------------------------------------------------
 
     sem jsonCmp =
-    | Lt ()   -> "<"
-    | LtEq () -> "<="
-    | Eq ()   -> "=="
-    | GtEq () -> ">="
-    | Gt ()   -> ">"
+    | Lt ()   -> JsonString "lt"
+    | LtEq () -> JsonString "le"
+    | Eq ()   -> JsonString "eq"
+    | GtEq () -> JsonString "ge"
+    | Gt ()   -> JsonString "gt"
+
+    -- jsonInvarConjunct: InvariantConjunct -> JsonValue
+    sem jsonInvarConjunct =
+    | (x, cmp, n) ->
+        JsonObject [
+            ("clock", JsonString x),
+            ("cmp", jsonCmp cmp),
+            ("n", JsonInt n)
+        ]
+
+    -- jsonGuardConjunct: GuardConjunct -> JsonValue
+    sem jsonGuardConjunct =
+    | OneClockGuard (x, cmp, n) ->
+        JsonObject [
+            ("clocks_n", JsonInt 1),
+            ("clock", JsonString x),
+            ("cmp", jsonCmp cmp),
+            ("n", JsonInt n)
+        ]
+    | TwoClockGuard (x, y, cmp, n) ->
+        JsonObject [
+            ("clocks_n", JsonInt 2),
+            ("clock_1", JsonString x),
+            ("clock_2", JsonString y),
+            ("cmp", jsonCmp cmp),
+            ("n", JsonInt n)
+        ]
 
     -- jsonProperty: Property -> JsonValue
     sem jsonProperty =
     | Invariant conjuncts ->
-        JsonString (strJoin "&" (map (lam c.
-            match c with (x, cmp, n) then
-                concat x (concat (jsonCmp cmp) (int2string n))
-            else never
-        ) conjuncts))
+        JsonArray (map jsonInvarConjunct conjuncts)
     | Guard conjuncts ->
-        JsonString (strJoin "&" (map (lam c.
-            match c with OneClockGuard (x, cmp, n) then
-                concat x (concat (jsonCmp cmp) (int2string n))
-            else match c with TwoClockGuard (x, y, cmp, n) then
-                concat (concat (concat x (concat "-" y)) (jsonCmp cmp))
-                    (int2string n)
-            else never
-        ) conjuncts))
+        JsonArray (map jsonGuardConjunct conjuncts)
     | Sync action -> jsonAction action
     | Reset clocks -> JsonArray (map (lam c. JsonString c) clocks)
 

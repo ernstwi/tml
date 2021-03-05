@@ -28,17 +28,35 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         },
         {
             "id": "baz",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "foo",
             "initial": true,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         }
     ]
 }

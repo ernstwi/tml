@@ -9,7 +9,14 @@
         {
             "action": "a",
             "from": "foo",
-            "guard": "x==10",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "eq",
+                    "n": 10
+                }
+            ],
             "reset": [
                 "x"
             ],
@@ -20,7 +27,13 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         },
         {
             "id": "foo",

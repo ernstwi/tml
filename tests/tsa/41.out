@@ -14,12 +14,24 @@
         {
             "id": "b",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "c",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "d",
@@ -34,12 +46,24 @@
         {
             "id": "f",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         },
         {
             "id": "g",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         }
     ]
 }

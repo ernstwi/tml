@@ -10,7 +10,14 @@
         {
             "action": "a",
             "from": "foo",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": [
                 "x",
                 "y"

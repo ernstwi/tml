@@ -10,28 +10,56 @@
         {
             "action": "foo",
             "from": "b",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "d"
         },
         {
             "action": "foo",
             "from": "b",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "e"
         },
         {
             "action": "foo",
             "from": "c",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "d"
         },
         {
             "action": "foo",
             "from": "c",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "e"
         },
@@ -66,47 +94,101 @@
         {
             "id": "b",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "c",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "d",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "e",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "f",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "g",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "h",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "i",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "j",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         }
     ]
 }

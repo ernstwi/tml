@@ -28,7 +28,13 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "y<10"
+            "invariant": [
+                {
+                    "clock": "y",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "foo",

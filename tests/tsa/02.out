@@ -24,7 +24,15 @@
         {
             "action": "press",
             "from": "foo",
-            "guard": "x-y==5",
+            "guard": [
+                {
+                    "clock_1": "x",
+                    "clock_2": "y",
+                    "clocks_n": 2,
+                    "cmp": "eq",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "bar"
         }
@@ -33,7 +41,13 @@
         {
             "id": "bar",
             "initial": true,
-            "invariant": "x<=10"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "le",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "baz",

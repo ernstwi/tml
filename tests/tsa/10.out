@@ -9,7 +9,18 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<10&y<=25"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 10
+                },
+                {
+                    "clock": "y",
+                    "cmp": "le",
+                    "n": 25
+                }
+            ]
         },
         {
             "id": "foo",

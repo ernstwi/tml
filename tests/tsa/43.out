@@ -7,28 +7,56 @@
         {
             "action": null,
             "from": "b",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "d"
         },
         {
             "action": null,
             "from": "b",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "e"
         },
         {
             "action": null,
             "from": "c",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "d"
         },
         {
             "action": null,
             "from": "c",
-            "guard": "x<5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "e"
         },

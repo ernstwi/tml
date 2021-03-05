@@ -14,7 +14,14 @@
         {
             "action": null,
             "from": "foo",
-            "guard": "x>=5",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "ge",
+                    "n": 5
+                }
+            ],
             "reset": null,
             "to": "bar"
         }
@@ -23,7 +30,13 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<10"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 10
+                }
+            ]
         },
         {
             "id": "baz",

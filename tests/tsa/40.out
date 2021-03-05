@@ -8,12 +8,24 @@
         {
             "id": "bar",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         },
         {
             "id": "baz",
             "initial": false,
-            "invariant": "x<5"
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
         },
         {
             "id": "foo",
