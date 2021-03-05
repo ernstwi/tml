@@ -1,0 +1,8 @@
+init foo
+    invar { x < 5 }
+
+foo -> bar
+    guard { x == 10 }
+
+bar -> baz
+    guard { x < 3 & y > 5 }

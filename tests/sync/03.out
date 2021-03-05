@@ -1,0 +1,66 @@
+{
+    "channels": [],
+    "clocks": [
+        "x",
+        "y"
+    ],
+    "edges": [
+        {
+            "from": "bar",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "lt",
+                    "n": 3
+                },
+                {
+                    "clock": "y",
+                    "clocks_n": 1,
+                    "cmp": "gt",
+                    "n": 5
+                }
+            ],
+            "reset": null,
+            "sync": null,
+            "to": "baz"
+        },
+        {
+            "from": "foo",
+            "guard": [
+                {
+                    "clock": "x",
+                    "clocks_n": 1,
+                    "cmp": "eq",
+                    "n": 10
+                }
+            ],
+            "reset": null,
+            "sync": null,
+            "to": "bar"
+        }
+    ],
+    "locations": [
+        {
+            "id": "bar",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "baz",
+            "initial": false,
+            "invariant": null
+        },
+        {
+            "id": "foo",
+            "initial": true,
+            "invariant": [
+                {
+                    "clock": "x",
+                    "cmp": "lt",
+                    "n": 5
+                }
+            ]
+        }
+    ]
+}

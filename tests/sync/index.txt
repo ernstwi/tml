@@ -1,3 +1,4 @@
 00: Sync actions
 01: Parse error
 02: Semantic errors
+03: Location invariants and edge guards
