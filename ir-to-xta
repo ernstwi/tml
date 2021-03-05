@@ -9,10 +9,12 @@ let files = process.argv.splice(2);
 let irs = files.map(f => JSON.parse(fs.readFileSync(f)));
 let channels = new Set();
 irs.forEach(ir => ir.channels.forEach(c => channels.add(c)));
-files.forEach((f, i) => irs[i].name = f.replace(/\.[^\.]*$/, ''));
+files.forEach((f, i) => irs[i].name = f.replace(/\.[^\.]*$/, '').replace(/\W/g, '_'));
 
-print(0, `chan ${[...channels].join(', ')};`);
-newline();
+if (channels.size > 0) {
+    print(0, `chan ${[...channels].join(', ')};`);
+    newline();
+}
 
 irs.forEach(ir => {
   print(0, `process ${ir.name}() {`);
